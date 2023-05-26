@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+#instructions {
+    text-align: center;
+}
+
+#game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#board {
+    width: 600px;
+    height: 600px;
+    background-color: #eeeedd;
+    margin: 20px;
+}
+
+#timer {
+    align-self: flex-end;
+    margin-right: 20px;
+}
