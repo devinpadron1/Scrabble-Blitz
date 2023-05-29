@@ -4,23 +4,25 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrabble Trainer</title>
+    <title>Scrabble Blitz</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js"></script> 
 </head>
 <body>
     <div id="instructions">
-        <p>Earn the most points by the end of the time limit.</p>
-        <button id="play-button">Play</button>
+        <p>Earn the most points before times runs out!</p>
+        <button id="play-button">Play</a>
         <button id="high-score-button">High Score</button>
     </div>
     <div id="game-screen" style="display: none;">
         <div id="timer">60</div>
-        <div id="board"></div>
+        <div id="board-square-container">
+            <!-- board squares -->
+        </div>
         <div id="tray"></div>
         <button id="shuffle-button">Shuffle</button>
-        <button id="nextRound">Next</button>
         <button id="pass">Pass</button>
+        <button id="nextRound">Next</button>
     </div>
 </body>
 </html>

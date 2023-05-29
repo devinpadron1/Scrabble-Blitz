@@ -3,6 +3,8 @@ Initial Screen
         Earn the most points by the end of the time limit.
     Play button
     High Score Button
+    Settings
+        Game Timer 2min 5min Unlimited
 
 Game Screen
     Board with words loaded
@@ -13,6 +15,9 @@ Game Screen
         Shuffle button
     Timer on top right
     Tray of letters
+    Pause
+        High-Score
+        Exit Game
 
 First version of app will be just one single word in the center
 
