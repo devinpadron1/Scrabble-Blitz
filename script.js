@@ -21,9 +21,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 boardSquare.setAttribute("id", `grid${i}_${j}`);
                 
                 // Create sets for each special square
-                const doubleLetter = new Set(["1_4", "1_12", "4_1", "4_8", "4_15", "12_1", "12_8", "12_15", "15_4", "15_12", "8_4", "8_12"]);
+                const doubleLetter = new Set(["1_4", "1_12", "3_7", "3_9", "4_1", "4_8", "4_15", "7_3", "7_7", "7_9", "7_13", "8_4", "8_12", "9_3", "9_7", "9_9", "9_13", "12_1", "12_8", "12_15", "13_7", "13_9", "15_4", "15_12"]);
                 const tripleLetter = new Set(["2_6", "2_10", "6_2", "6_6", "6_10", "6_14", "10_2", "10_6", "10_10", "10_14", "14_6", "14_10"]);
-                const doubleWord = new Set(["2_2", "2_14", "3_7", "3_9", "7_3", "7_7", "7_9", "7_13", "9_3", "9_7", "9_9", "9_13", "13_7", "13_9", "14_2", "14_14"]);
+                const doubleWord = new Set(["2_2", "2_14", "3_3", "3_13", "4_4", "4_12", "5_5", "5_11", "7_3", "7_7", "7_9", "7_13", "9_3", "9_7", "9_9", "9_13", "11_5", "11_11", "12_4", "12_12", "13_3", "13_13", "14_2", "14_14"]);
                 const tripleWord = new Set(["1_1", "1_8", "1_15", "8_1", "8_15", "15_1", "15_8", "15_15"]);
 
                 let position = `${i}_${j}`;
@@ -82,5 +82,5 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 })
 
-// TODO: Load Grid
+// TODO: Fix Special Squares
 // TODO: Load initial word
