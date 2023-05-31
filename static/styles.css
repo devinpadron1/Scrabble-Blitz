@@ -1,3 +1,7 @@
+* {
+    background-color: rgb(244, 238, 226);
+}
+
 body {
     font-family: Arial, sans-serif;
 }
@@ -10,7 +14,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: rgb(244, 238, 226);
 }
 
 #board-square-container {
@@ -24,13 +27,22 @@ body {
 
 .board-square {
     display: flex;
-    align-self: center;
     justify-content: center;
+    align-items: center;
     height: 100%;
     width: 38px;
     height: 38px;
     background-color: rgb(235, 209, 177);
     border: 1px solid white;
+    position: relative;
+}
+
+span {
+    background-color: transparent;
+}
+
+.bonus-text {
+    position: absolute;
 }
 
 .triple-word {
@@ -59,10 +71,9 @@ body {
     color: #3d1b00; /* letter color */
     font-size: 24px;
     font-weight: bold;
+    position: absolute;
+    z-index: 1;
 }
-
-
-
 
 /* Middle Square */
 #grid8_8 {

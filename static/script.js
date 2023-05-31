@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     fetch('http://127.0.0.1:5000/word')
     .then(response => response.json())
     .then(data => {
-        console.log(data)
+        console.log(data);
         fetchedWord = data.word;
         console.log('Type of fetchedWord:', typeof fetchedWord);
         loadWord(fetchedWord);
@@ -15,16 +15,32 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
     
     function loadWord(word) {
-        let letters = word.split('')
+        // Pick random letter to be in center square
+        let letters = word.split('');
+        let randomIndex = Math.floor(Math.random() * letters.length);
+        
+        // Pick orientation
+        let vertical = false;
+        let horizontal = false;
+        let vertOrHor = Math.random(); // Vertical or Horizontal
+        if (vertOrHor >= .5) {
+           vertical = true;
+        } else {
+            horizontal = true; // horizontal
+        }
+
+        // Build out word
         for(let i=0; i<letters.length; i++){
-            // Get a reference to the square where the letter should go
-            
-            const tileDiv = document.createElement('div');
+            const tileDiv = document.createElement('span');
             tileDiv.className = 'tile'; // Set the class name of the <div> element
             tileDiv.textContent = `${letters[i]}`; // Set the text content of the <div> element
-
-            let container = document.getElementById(`grid8_${1+(i)}`);
-            container.appendChild(tileDiv);
+            if (vertical) {
+                let container = document.getElementById(`grid${8+i-randomIndex}_8`);
+                container.appendChild(tileDiv);
+            } else if (horizontal) {
+                let container = document.getElementById(`grid8_${8+i-randomIndex}`);
+                container.appendChild(tileDiv);
+            }
         }
     }
     
@@ -48,12 +64,29 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
             if (doubleLetter.has(position)) {
                 boardSquare.classList.add("double-letter");
+                // Add span element with bonus text
+                const bonusText = document.createElement('span');
+                bonusText.className = 'bonus-text';
+                bonusText.textContent = 'DL';
+                boardSquare.appendChild(bonusText);
             } else if (tripleLetter.has(position)) {
                 boardSquare.classList.add("triple-letter");
+                const bonusText = document.createElement('span');
+                bonusText.className = 'bonus-text';
+                bonusText.textContent = 'TL';
+                boardSquare.appendChild(bonusText);
             } else if (doubleWord.has(position)) {
                 boardSquare.classList.add("double-word");
+                const bonusText = document.createElement('span');
+                bonusText.className = 'bonus-text';
+                bonusText.textContent = 'DW';
+                boardSquare.appendChild(bonusText);
             } else if (tripleWord.has(position)) {
                 boardSquare.classList.add("triple-word");
+                const bonusText = document.createElement('span');
+                bonusText.className = 'bonus-text';
+                bonusText.textContent = 'TW';
+                boardSquare.appendChild(bonusText);    
             }
 
             // Append to container element

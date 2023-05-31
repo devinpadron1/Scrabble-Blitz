@@ -5,6 +5,8 @@ app = Flask(__name__)
 
 with open("scrabble-words.txt", "r") as file:
     words = file.read().split()
+# Words with 7 letters or less
+filtered_words = [word for word in words if len(word) <= 7]
 
 @app.route('/', methods=['GET'])
 def home():
@@ -76,10 +78,14 @@ def get_word():
         'Z': {'amount': 1},
         '_': {'amount': 2},  # blank tiles
     }
-
+    first_Turn = True
     while True:
         # return a random word from scrabble dictionary
-        word = random.choice(words)
+        if (first_Turn):
+            word = random.choice(filtered_words)
+            first_Turn = False
+        else:
+            word = random.choice(words)
 
         # split word into array of letters
         word_letters = list(word)
@@ -100,8 +106,7 @@ def get_word():
         if enough_tiles:
             counter = 0
             break # break outer loop
-    
-    print(current_tiles)
+
     return jsonify({"word": word})
 
 # Only run code when imported as script, not a module
