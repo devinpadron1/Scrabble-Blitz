@@ -18,16 +18,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
         let letters = word.split('')
         for(let i=0; i<letters.length; i++){
             // Get a reference to the square where the letter should go
-            // You may need to adjust the calculation for the square id depending on how your board is laid out
-            let square = document.getElementById(`grid8_${0+(i)}`);
             
-            if (square) {
-                // Place the letter in the square
-                square.innerHTML = letters[i];
-            } else {
-                console.log(`Element with id grid8_${0+(i)} does not exist`)
-            }
+            const tileDiv = document.createElement('div');
+            tileDiv.className = 'tile'; // Set the class name of the <div> element
+            tileDiv.textContent = `${letters[i]}`; // Set the text content of the <div> element
 
+            let container = document.getElementById(`grid8_${1+(i)}`);
+            container.appendChild(tileDiv);
         }
     }
     
@@ -75,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     function startGame() {
         // Start the game: 
         // 1. Start the timer.
-        // 3. Load the tray.
+        // 2. Load the tray.
     }
 })
 

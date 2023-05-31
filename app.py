@@ -100,11 +100,10 @@ def get_word():
         if enough_tiles:
             counter = 0
             break # break outer loop
-
+    
+    print(current_tiles)
     return jsonify({"word": word})
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
-
-# TODO: The initial word can't be longer than 7 letters
