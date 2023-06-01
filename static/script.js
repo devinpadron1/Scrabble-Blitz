@@ -1,19 +1,25 @@
 document.addEventListener("DOMContentLoaded", function(event) {
     let fetchedWord;
 
-    // Fetch word from Flask
+    // Fetch word and rack from Flask
     fetch('http://127.0.0.1:5000/word')
     .then(response => response.json())
     .then(data => {
-        console.log(data);
         fetchedWord = data.word;
-        console.log('Type of fetchedWord:', typeof fetchedWord);
+        fetchedTiles = data.tiles;
         loadWord(fetchedWord);
+        loadTiles(fetchedTiles);
     })
     .catch((error) => {
         console.error('Error:', error);
     });
     
+    function tileGenerator(letter) {
+        const tileDiv = document.createElement('div');
+        tileDiv.textContent = `${letter}`; // Set the text content of the <div> element
+        return tileDiv
+    }
+
     function loadWord(word) {
         // Pick random letter to be in center square
         let letters = word.split('');
@@ -26,14 +32,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if (vertOrHor >= .5) {
            vertical = true;
         } else {
-            horizontal = true; // horizontal
+            horizontal = true;
         }
 
         // Build out word
-        for(let i=0; i<letters.length; i++){
-            const tileDiv = document.createElement('span');
-            tileDiv.className = 'tile'; // Set the class name of the <div> element
-            tileDiv.textContent = `${letters[i]}`; // Set the text content of the <div> element
+        for(let i=0; i<letters.length; i++) {
+            let tileDiv = tileGenerator(letters[i]);
+            tileDiv.className = 'tile-ingame'; // Set the class name of the <div> element
             if (vertical) {
                 let container = document.getElementById(`grid${8+i-randomIndex}_8`);
                 container.appendChild(tileDiv);
@@ -43,8 +48,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
         }
     }
+
+    function loadTiles(tiles) {
+        for (let i=0; i<tiles.length; i++) {
+            let tileDiv = tileGenerator(tiles[i]);
+            tileDiv.className = 'tile-tray';
+            let container = document.getElementById(`tray`);
+            container.appendChild(tileDiv);
+        }
+    }
     
-    // 2. Load the board.
+    // Load the board.
     for (let i = 1; i <= 15; i++) {
         for (let j = 1; j <= 15; j++) {
             // Create element
@@ -109,7 +123,5 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 })
 
-// TODO: Create letter tile
-// TODO: Add star to center square
-// TODO: Add letters to bonus squares
-// TODO: Load tray of letters
+// TODO: Show letter points in tile
+// TODO: Account for instance where word goes out of bounds

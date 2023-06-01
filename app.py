@@ -13,75 +13,46 @@ def home():
     return render_template('index.html')
 
 @app.route('/word', methods=['GET'])
-def get_word():
-    # This is where you would get a word from your word source.
-    
+def get_word():    
     # Initialize key variables
     points = amount = None
 
-    # Create tiles with values and quantities
-    default_tiles = {
-        'A': {points: 1, amount: 9},
-        'B': {points: 3, amount: 2},
-        'C': {points: 3, amount: 2},
-        'D': {points: 2, amount: 4},
-        'E': {points: 1, amount: 12},
-        'F': {points: 4, amount: 2},
-        'G': {points: 2, amount: 3},
-        'H': {points: 4, amount: 2},
-        'I': {points: 1, amount: 9},
-        'J': {points: 8, amount: 1},
-        'K': {points: 5, amount: 1},
-        'L': {points: 1, amount: 4},
-        'M': {points: 3, amount: 2},
-        'N': {points: 1, amount: 6},
-        'O': {points: 1, amount: 8},
-        'P': {points: 3, amount: 2},
-        'Q': {points: 10, amount: 1},
-        'R': {points: 1, amount: 6},
-        'S': {points: 1, amount: 4},
-        'T': {points: 1, amount: 6},
-        'U': {points: 1, amount: 4},
-        'V': {points: 4, amount: 2},
-        'W': {points: 4, amount: 2},
-        'X': {points: 8, amount: 1},
-        'Y': {points: 4, amount: 2},
-        'Z': {points: 10, amount: 1},
-        '_': {points: 0, amount: 2}, # blank tiles
-      }
-    current_tiles = {
-        'A': {'amount': 9},
-        'B': {'amount': 2},
-        'C': {'amount': 2},
-        'D': {'amount': 4},
-        'E': {'amount': 12},
-        'F': {'amount': 2},
-        'G': {'amount': 3},
-        'H': {'amount': 2},
-        'I': {'amount': 9},
-        'J': {'amount': 1},
-        'K': {'amount': 1},
-        'L': {'amount': 4},
-        'M': {'amount': 2},
-        'N': {'amount': 6},
-        'O': {'amount': 8},
-        'P': {'amount': 2},
-        'Q': {'amount': 1},
-        'R': {'amount': 6},
-        'S': {'amount': 4},
-        'T': {'amount': 6},
-        'U': {'amount': 4},
-        'V': {'amount': 2},
-        'W': {'amount': 2},
-        'X': {'amount': 1},
-        'Y': {'amount': 2},
-        'Z': {'amount': 1},
-        '_': {'amount': 2},  # blank tiles
+    # Default tiles with quantities
+    default_tile_quantities = {
+        'A': {'points': 1, 'amount': 9},
+        'B': {'points': 3, 'amount': 2},
+        'C': {'points': 3, 'amount': 2},
+        'D': {'points': 2, 'amount': 4},
+        'E': {'points': 1, 'amount': 12},
+        'F': {'points': 4, 'amount': 2},
+        'G': {'points': 2, 'amount': 3},
+        'H': {'points': 4, 'amount': 2},
+        'I': {'points': 1, 'amount': 9},
+        'J': {'points': 8, 'amount': 1},
+        'K': {'points': 5, 'amount': 1},
+        'L': {'points': 1, 'amount': 4},
+        'M': {'points': 3, 'amount': 2},
+        'N': {'points': 1, 'amount': 6},
+        'O': {'points': 1, 'amount': 8},
+        'P': {'points': 3, 'amount': 2},
+        'Q': {'points': 10, 'amount': 1},
+        'R': {'points': 1, 'amount': 6},
+        'S': {'points': 1, 'amount': 4},
+        'T': {'points': 1, 'amount': 6},
+        'U': {'points': 1, 'amount': 4},
+        'V': {'points': 4, 'amount': 2},
+        'W': {'points': 4, 'amount': 2},
+        'X': {'points': 8, 'amount': 1},
+        'Y': {'points': 4, 'amount': 2},
+        'Z': {'points': 10, 'amount': 1},
+        '_': {'points': 0, 'amount': 2},  # blank tiles
     }
+    # In game tiles
+    current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tile_quantities.items()}
+    
     first_Turn = True
     while True:
-        # return a random word from scrabble dictionary
-        if (first_Turn):
+        if (first_Turn): # return word from scrabble dictionary thats 7 letters or less
             word = random.choice(filtered_words)
             first_Turn = False
         else:
@@ -97,17 +68,41 @@ def get_word():
                 current_tiles[letter]['amount'] -= 1
                 counter += 1
             else: # if not enough tiles
-                # add previous letter tiles back
-                for letter in word_letters[:counter]:
+                for letter in word_letters[:counter]: # add previous letter tiles back
                     current_tiles[letter]['amount'] += 1
-                enough_tiles = False            
+                enough_tiles = False
+                first_Turn = True
+            
                 break # break inner loop if not enough tiles
         
         if enough_tiles:
             counter = 0
             break # break outer loop
 
-    return jsonify({"word": word})
+    def player_tiles(current_tiles, num_tiles=7):
+        # player tile rack
+        tile_rack = []
+
+        # list of available letter tiles
+        tile_letters = [letter for letter, data in current_tiles.items() if data['amount'] > 0]
+        
+        # add random, available tiles to tile_rack
+        for _ in range(num_tiles):
+            if tile_letters:
+                selected_tile = random.choice(tile_letters)
+                current_tiles[selected_tile]['amount'] -= 1
+                tile_rack.append(selected_tile)
+
+                if current_tiles[selected_tile]['amount'] == 0:
+                    tile_letters.remove(selected_tile)
+            else:
+                break
+
+        return tile_rack
+    
+    tiles = player_tiles(current_tiles, num_tiles=7)
+    print(word, tiles)
+    return jsonify({"word": word, "tiles": tiles})
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
