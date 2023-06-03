@@ -27,8 +27,8 @@ body {
 #board-square-container {
     display: flex;
     flex-wrap: wrap;
-    width: 600px;
-    height: 600px;
+    width: 550px;
+    height: 550px;
     margin: 20px;
     border: 1px solid white;
 }
@@ -38,8 +38,8 @@ body {
     justify-content: center;
     align-items: center;
     height: 100%;
-    width: 38px;
-    height: 38px;
+    width: 48px;
+    height: 48px;
     background-color: rgb(235, 209, 177);
     border: 1px solid white;
     position: relative;
@@ -101,7 +101,7 @@ span {
 }
 
 /* Middle Square */
-#grid8_8 {
+#grid6_6 {
     background-color: rgb(230, 150, 2);
 }
 

@@ -1,29 +1,112 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-    let fetchedWord;
 
     // Fetch word and rack from Flask
     fetch('http://127.0.0.1:5000/word')
     .then(response => response.json())
     .then(data => {
-        fetchedWord = data.word;
-        fetchedTiles = data.tiles;
-        loadWord(fetchedWord);
-        loadTiles(fetchedTiles);
+        const wordString = data.word;
+        const playerTiles = data.tiles;
+        loadWord(wordString);
+        loadTiles(playerTiles);
     })
     .catch((error) => {
         console.error('Error:', error);
     });
+
+    let tileCount = 0;
+
+    const letterValues = {
+        'A': 1,
+        'B': 3,
+        'C': 3,
+        'D': 2,
+        'E': 1,
+        'F': 4,
+        'G': 2,
+        'H': 4,
+        'I': 1,
+        'J': 8,
+        'K': 5,
+        'L': 1,
+        'M': 3,
+        'N': 1,
+        'O': 1,
+        'P': 3,
+        'Q': 10,
+        'R': 1,
+        'S': 1,
+        'T': 1,
+        'U': 1,
+        'V': 4,
+        'W': 4,
+        'X': 8,
+        'Y': 4,
+        'Z': 10
+    };
+
+    function dragStart(e) {
+        e.dataTransfer.setData('text/plain', e.target.id);
+        e.dataTransfer.effectAllowed = "move";
+        e.stopPropagation();
+        console.log('Drag Start');
+    }
     
-    function tileGenerator(letter) {
+    function dragEnd(e) {
+        console.log('Drag End');
+    }
+    
+    function dragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function dragEnter(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function dragLeave(e) {
+        e.stopPropagation();
+        console.log('Drag Leave');
+    }
+    
+    function drop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Drop');
+        const id = e.dataTransfer.getData('text/plain');
+        const draggableElement = document.getElementById(id);
+        const dropzone = e.target;
+        if (!dropzone.querySelector(".tile")) {  // check if dropzone is empty
+            // Here, remove the tile from its original parent
+            draggableElement.parentNode.removeChild(draggableElement);
+            // Then append it to the dropzone
+            dropzone.appendChild(draggableElement);
+        } else {
+            console.log('Square is occupied');
+        }
+    }
+
+    function tileGenerator(letter, id) {
         const tileDiv = document.createElement('div');
-        tileDiv.textContent = `${letter}`; // Set the text content of the <div> element
+        tileDiv.textContent = letter; // Set the text content of the <div> element
+        tileDiv.setAttribute('draggable', true);
+        tileDiv.setAttribute('id', id);  // Assign a unique ID to the tile
+        tileDiv.classList.add("tile");
+        tileDiv.addEventListener('dragstart', dragStart);
+        tileDiv.addEventListener('dragend', dragEnd);
+        let points = letterValues[letter];
+        // tileDiv.textContent += points;
+        tileCount++;
         return tileDiv
     }
 
-    function loadWord(word) {
-        // Pick random letter to be in center square
-        let letters = word.split('');
-        let randomIndex = Math.floor(Math.random() * letters.length);
+    function loadWord(wordString) {
+        // Load Word
+        let wordLength = wordString.length;
+
+        // Pick random letter to be in center square           
+        let randomIndex = Math.floor(Math.random() * wordLength);
         
         // Pick orientation
         let vertical = false;
@@ -36,22 +119,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
 
         // Build out word
-        for(let i=0; i<letters.length; i++) {
-            let tileDiv = tileGenerator(letters[i]);
+        for (let i=0; i < wordLength; i++) {
+            let tileDiv = tileGenerator(wordString[i], `wordTile${i}`);
             tileDiv.className = 'tile-ingame'; // Set the class name of the <div> element
             if (vertical) {
-                let container = document.getElementById(`grid${8+i-randomIndex}_8`);
+                let container = document.getElementById(`grid${6+i-randomIndex}_6`);
                 container.appendChild(tileDiv);
             } else if (horizontal) {
-                let container = document.getElementById(`grid8_${8+i-randomIndex}`);
+                let container = document.getElementById(`grid6_${6+i-randomIndex}`);
                 container.appendChild(tileDiv);
             }
         }
     }
 
     function loadTiles(tiles) {
-        for (let i=0; i<tiles.length; i++) {
-            let tileDiv = tileGenerator(tiles[i]);
+        // Load Tiles
+        let tileLength = tiles.length;
+
+        for (let i=0; i < tileLength; i++) {
+            let tileDiv = tileGenerator(tiles[i], `trayTile${i}`);
             tileDiv.className = 'tile-tray';
             let container = document.getElementById(`tray`);
             container.appendChild(tileDiv);
@@ -59,23 +145,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
     
     // Load the board.
-    for (let i = 1; i <= 15; i++) {
-        for (let j = 1; j <= 15; j++) {
+    for (let i = 1; i <= 11; i++) {
+        for (let j = 1; j <= 11; j++) {
             // Create element
             var boardSquare = document.createElement("div");
             // assign its id
             boardSquare.setAttribute("class", "board-square");
             // assign coordinates
             boardSquare.setAttribute("id", `grid${i}_${j}`);
+            boardSquare.addEventListener('dragover', dragOver);
+            boardSquare.addEventListener('dragenter', dragEnter);
+            boardSquare.addEventListener('dragleave', dragLeave);
+            boardSquare.addEventListener('drop', drop);
             
             // Create sets for each special square
-            const doubleLetter = new Set(["1_4", "1_12", "3_7", "3_9", "4_1", "4_8", "4_15", "7_3", "7_7", "7_9", "7_13", "8_4", "8_12", "9_3", "9_7", "9_9", "9_13", "12_1", "12_8", "12_15", "13_7", "13_9", "15_4", "15_12"]);
-            const tripleLetter = new Set(["2_6", "2_10", "6_2", "6_6", "6_10", "6_14", "10_2", "10_6", "10_10", "10_14", "14_6", "14_10"]);
-            const doubleWord = new Set(["2_2", "2_14", "3_3", "3_13", "4_4", "4_12", "5_5", "5_11", "7_3", "7_7", "7_9", "7_13", "9_3", "9_7", "9_9", "9_13", "11_5", "11_11", "12_4", "12_12", "13_3", "13_13", "14_2", "14_14"]);
-            const tripleWord = new Set(["1_1", "1_8", "1_15", "8_1", "8_15", "15_1", "15_8", "15_15"]);
+            const doubleLetter = new Set(["1_4", "1_8", "3_6", "4_1", "4_11", "5_5", "5_7", "6_3", "6_9", "7_5", "7_7", "8_1", "8_11", "9_6", "11_4", "11_8"]);
+            const tripleLetter = new Set(["3_3", "3_9", "9_3", "9_9"]);
+            const doubleWord = new Set(["2_2", "2_10", "4_4", "4_8", "8_4", "8_8", "10_2", "10_10"]);
+            const tripleWord = new Set(["1_1", "1_6", "1_11", "6_1", "6_11", "11_1", "11_6", "11_11"]);
 
             let position = `${i}_${j}`;
-
+            
+            // Adds text and class to bonus squares
             if (doubleLetter.has(position)) {
                 boardSquare.classList.add("double-letter");
                 // Add span element with bonus text
@@ -124,4 +215,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 })
 
 // TODO: Show letter points in tile
+
+// TODO: Create word using player tiles
+    // Add ability to pick up and drop tiles onto board
+    // When word is submitted, 
+        // verify that word is valid
+        // if valid then
+
 // TODO: Account for instance where word goes out of bounds
+
+// TODO: Ensure that initial word that is loaded does not go out of bounds
+
+// DID: Reduce grid size from 15x15 to 11x11
+// DID: Remove blank tile

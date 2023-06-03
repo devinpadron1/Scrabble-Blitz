@@ -14,11 +14,9 @@ def home():
 
 @app.route('/word', methods=['GET'])
 def get_word():    
-    # Initialize key variables
-    points = amount = None
 
     # Default tiles with quantities
-    default_tile_quantities = {
+    default_tiles = {
         'A': {'points': 1, 'amount': 9},
         'B': {'points': 3, 'amount': 2},
         'C': {'points': 3, 'amount': 2},
@@ -44,14 +42,14 @@ def get_word():
         'W': {'points': 4, 'amount': 2},
         'X': {'points': 8, 'amount': 1},
         'Y': {'points': 4, 'amount': 2},
-        'Z': {'points': 10, 'amount': 1},
-        '_': {'points': 0, 'amount': 2},  # blank tiles
+        'Z': {'points': 10, 'amount': 1},  # blank tiles
     }
     # In game tiles
-    current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tile_quantities.items()}
+    current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tiles.items()}
     
     first_Turn = True
-    while True:
+    word_not_in_board = True
+    while word_not_in_board:
         if (first_Turn): # return word from scrabble dictionary thats 7 letters or less
             word = random.choice(filtered_words)
             first_Turn = False
@@ -72,15 +70,13 @@ def get_word():
                     current_tiles[letter]['amount'] += 1
                 enough_tiles = False
                 first_Turn = True
-            
                 break # break inner loop if not enough tiles
         
         if enough_tiles:
             counter = 0
             break # break outer loop
 
-    def player_tiles(current_tiles, num_tiles=7):
-        # player tile rack
+    def player_tiles(current_tiles, num_tiles):
         tile_rack = []
 
         # list of available letter tiles
@@ -90,17 +86,14 @@ def get_word():
         for _ in range(num_tiles):
             if tile_letters:
                 selected_tile = random.choice(tile_letters)
-                current_tiles[selected_tile]['amount'] -= 1
                 tile_rack.append(selected_tile)
-
-                if current_tiles[selected_tile]['amount'] == 0:
-                    tile_letters.remove(selected_tile)
-            else:
-                break
+                current_tiles[selected_tile]['amount'] -= 1
 
         return tile_rack
     
-    tiles = player_tiles(current_tiles, num_tiles=7)
+    # Makes data tuples to preserve order
+    
+    tiles = player_tiles(current_tiles, 7)
     print(word, tiles)
     return jsonify({"word": word, "tiles": tiles})
 
