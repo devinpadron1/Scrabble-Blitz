@@ -59,6 +59,7 @@ span {
 .double-word::after, .double-letter::after {
     position: absolute;
     z-index: 0;
+    font-size: large;
 }
 
 .triple-word { background-color: red; }
@@ -88,6 +89,8 @@ span {
     font-size: 24px;
     font-weight: bold;
     z-index: 2;
+
+    position: relative;
 }
 
 .tile-ingame {
@@ -106,6 +109,15 @@ span {
     height: 40px;
     border-radius: 5px;
     margin: 10px auto;
+}
+
+.letter, .value { background-color: transparent;}
+
+.value {
+    position: absolute;
+    bottom: 2px;  
+    right: 2px;
+    font-size: 0.4em;
 }
 
 /* Middle Square */

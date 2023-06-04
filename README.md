@@ -5,8 +5,6 @@ Scrabble-Blitz is a fast-paced and engaging, word game inspired by Scrabble. It 
 
 ## Gameplay
 
-The game is simple:
-
 1. When the game starts, a single word is loaded onto the game board, and the player receives a tray of letter tiles.
 2. The player attempts to make words on the game board using the tiles in their tray.
 3. Points are awarded based on the value of the tiles used and the use of bonus squares.

@@ -82,27 +82,61 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if (!dropzone.querySelector(".tile")) {  // check if dropzone is empty
             draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
             dropzone.appendChild(draggableElement); // Append it to the dropzone
+            // Send tile position to Python
+            let tilePosition = {
+                tileID: draggableElement.id,
+                position: dropzone.id,
+            };
+            fetch('http://127.0.0.1:5000/tile-position', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tilePosition),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         } else {
             console.log('Square is occupied');
         }
     }
 
+    function addLetterAndNumber(tileDiv, letter) {
+        let letterDiv = document.createElement('div');
+        letterDiv.textContent = letter; // Set the text content of the <div> element
+        letterDiv.classList.add("letter");
+        tileDiv.appendChild(letterDiv); // Add the letter div to the tile div
+
+        let valueDiv = document.createElement('div');
+        valueDiv.textContent = letterValues[letter]; // Set the text content of the value div
+        valueDiv.classList.add("value");
+        tileDiv.appendChild(valueDiv); // Add the value div to the tile div
+
+        tileCount++;
+    }
+
     function tileGenerator(letter, id) {
-        const tileDiv = document.createElement('div');
-        tileDiv.textContent = letter; // Set the text content of the <div> element
+        let tileDiv = document.createElement('div');
+        addLetterAndNumber(tileDiv, letter)
+
+        // Drag Features
         tileDiv.setAttribute('draggable', true);
         tileDiv.setAttribute('id', id);  // Assign a unique ID to the tile
         tileDiv.classList.add("tile");
         tileDiv.addEventListener('dragstart', dragStart);
         tileDiv.addEventListener('dragend', dragEnd);
-        tileCount++;
+
         return tileDiv
     }
 
-    function tileWordGenerator(letter, id) {
-        const tileDiv = document.createElement('div');
-        tileDiv.textContent = letter; // Set the text content of the <div> element
-        tileCount++;
+    function tileWordGenerator(letter) {
+        let tileDiv = document.createElement('div');
+        addLetterAndNumber(tileDiv, letter)
         return tileDiv
     }
 
@@ -128,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         let tileLength = tiles.length;
 
         for (let i=0; i < tileLength; i++) {
-            let tileDiv = tileGenerator(tiles[i], `trayTile${i}`);
+            let tileDiv = tileGenerator(tiles[i], `${tiles[i]}${i}`);
             tileDiv.className = 'tile-tray';
             let container = document.getElementById(`tray`);
             container.appendChild(tileDiv);

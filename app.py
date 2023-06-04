@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 import random
 
 app = Flask(__name__)
@@ -57,7 +57,6 @@ class TileManager:
                 self.current_tiles[selected_tile]['amount'] -= 1
         return tile_rack
 
-
 class WordManager:
     def __init__(self):
         self.filtered_words = [word for word in words if len(word) <= 7]
@@ -100,7 +99,6 @@ class WordManager:
 
         return random_letter_index, orientation
 
-
 class BoardManager:
     def __init__(self, size=11): # Generate board
         self.board = [['_' for _ in range(size)] for _ in range(size)]
@@ -114,10 +112,18 @@ class BoardManager:
             for i, letter in enumerate(word):
                 self.board[row+i-position][col] = letter
 
+    def add_letter(self, letter, row, col, tileID):
+        # If tile found in board, remove it
+        for i in range(len(self.board)):
+            for j in range(len(self.board[i])):
+                if self.board[i][j] == tileID:
+                    self.board[i][j] = '_'
+        self.board[row][col] = tileID
+
+
     def display(self):
         for row in self.board:
-            print(' '.join(row))
-
+            print(' '.join(cell[0] for cell in row))
 
 
 @app.route('/word', methods=['GET'])
@@ -135,6 +141,31 @@ def send_word():
 
     return jsonify({"word": word, "tiles": tiles, "position": position, "orientation": orientation})
 
+@app.route('/tile-position', methods=['POST'])
+def update_tile_position():
+    data = request.get_json()
+    print(f"Received tile position: {data}")
+
+    board_manager = BoardManager()
+    # TODO: Do something with Data
+    tileID = data['tileID']
+
+    letter = data['tileID'][0]
+    position = data['position'].replace('grid','')
+    row, col = map(int, position.split('_'))
+
+    board_manager.add_letter(letter, row, col, tileID)
+    board_manager.display()
+
+    print(letter, row, col)
+    return '', 200
+
+
+
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
+
+# TODO: Add points functionality. Bonus squares, etc.
+
+# DID: Add POST route to receive updates on tile position in board.
