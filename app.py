@@ -45,11 +45,11 @@ class TileManager:
     def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
 
-    def player_tiles(self, num_tiles): # Current player-held tiles
+    def player_tiles(self, num_tiles): # Generates player-held tiles
         tile_rack = []
-        # add random, available tiles to tile_rack
+        # Add random, available tiles to tile_rack
         for _ in range(num_tiles):
-            # list of available letter tiles
+            # List of available letter tiles
             tile_letters = [letter for letter, data in self.current_tiles.items() if data['amount'] > 0]
             if tile_letters:
                 selected_tile = random.choice(tile_letters)
@@ -63,13 +63,10 @@ class WordManager:
         self.filtered_words = [word for word in words if len(word) <= 7]
         self.tile_manager = TileManager()
     
-    def select_first_word(self):
-        # Words with 7 letters or less
-        filtered_words = [word for word in words if len(word) <= 7]
-        
+    def select_first_word(self):        
         word_not_in_board = True
         while word_not_in_board:
-            word = random.choice(filtered_words)
+            word = random.choice(self.filtered_words)
 
             # split word into array of letters
             word_letters = list(word)
@@ -92,14 +89,26 @@ class WordManager:
                 break # break outer loop
         return word
 
+    def initial_position(self, word):
+        random_letter_index = random.randint(0, len(word) - 1)
+
+        # if word has 7 letters and the random letter is either first or last, shift the index
+        if len(word) == 7 and random_letter_index in [0, len(word) - 1]:
+            random_letter_index = random_letter_index + 1 if random_letter_index == 0 else random_letter_index - 1
+
+        orientation = random.choice(["horizontal", "vertical"])
+
+        return random_letter_index, orientation
+
 
 @app.route('/word', methods=['GET'])
 def send_word():    
     word_manager = WordManager()
     word = word_manager.select_first_word()
     tiles = word_manager.tile_manager.player_tiles(7)
-    print(word, tiles)
-    return jsonify({"word": word, "tiles": tiles})
+    position, orientation = word_manager.initial_position(word)
+    print(word, tiles, position, orientation)
+    return jsonify({"word": word, "tiles": tiles, "start": position, "orientation": orientation})
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
@@ -107,4 +116,5 @@ if __name__ == '__main__':
 
 # TODO: Add logic that shows the position of the first word.
     # Communicate starting position to JS
-# TODO: Fix AttributeError within WordManager
+
+# TODO: Ensure that initial word that is loaded does not go out of bounds
