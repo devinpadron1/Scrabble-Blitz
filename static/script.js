@@ -76,11 +76,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
         const id = e.dataTransfer.getData('text/plain');
         const draggableElement = document.getElementById(id);
         const dropzone = e.target;
+        if (!dropzone.classList.contains('board-square')) {
+            dropzone = dropzone.parentNode;
+        }
         if (!dropzone.querySelector(".tile")) {  // check if dropzone is empty
-            // Here, remove the tile from its original parent
-            draggableElement.parentNode.removeChild(draggableElement);
-            // Then append it to the dropzone
-            dropzone.appendChild(draggableElement);
+            draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
+            dropzone.appendChild(draggableElement); // Append it to the dropzone
         } else {
             console.log('Square is occupied');
         }
@@ -124,7 +125,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 
     function loadTiles(tiles) {
-        // Load Tiles
         let tileLength = tiles.length;
 
         for (let i=0; i < tileLength; i++) {
@@ -163,25 +163,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 // Add span element with bonus text
                 const bonusText = document.createElement('span');
                 bonusText.className = 'bonus-text';
-                bonusText.textContent = 'DL';
                 boardSquare.appendChild(bonusText);
             } else if (tripleLetter.has(position)) {
                 boardSquare.classList.add("triple-letter");
                 const bonusText = document.createElement('span');
                 bonusText.className = 'bonus-text';
-                bonusText.textContent = 'TL';
                 boardSquare.appendChild(bonusText);
             } else if (doubleWord.has(position)) {
                 boardSquare.classList.add("double-word");
                 const bonusText = document.createElement('span');
                 bonusText.className = 'bonus-text';
-                bonusText.textContent = 'DW';
                 boardSquare.appendChild(bonusText);
             } else if (tripleWord.has(position)) {
                 boardSquare.classList.add("triple-word");
                 const bonusText = document.createElement('span');
                 bonusText.className = 'bonus-text';
-                bonusText.textContent = 'TW';
                 boardSquare.appendChild(bonusText);    
             }
 
@@ -206,9 +202,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 })
 
 // TODO: Show letter points in tile
-
-// TODO: Create word using player tiles
-    // Add ability to pick up and drop tiles onto board
-    // When word is submitted, 
-        // verify that word is valid
-        // if valid then
+// TODO: Submit information to Python everytime the grid is updated
+// TODO: Add ability to return tile into stack.
+// TODO: Don't allow for tiles to stack on top of each other
+// TODO: Fix issue with bonus square where tile doesnt align

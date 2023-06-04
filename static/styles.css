@@ -31,6 +31,7 @@ body {
     height: 550px;
     margin: 20px;
     border: 1px solid white;
+    overflow: hidden;
 }
 
 .board-square {
@@ -50,21 +51,27 @@ span {
 }
 
 .bonus-text {
-    position: absolute;
+    position: relative;
+    z-index: 1;
 }
 
-.triple-word {
-    background-color: red;
+.triple-word::after, .triple-letter::after, 
+.double-word::after, .double-letter::after {
+    position: absolute;
+    z-index: 0;
 }
-.triple-letter {
-    background-color: rgb(98, 98, 226);
-}
-.double-word {
-    background-color: lightcoral;
-}
-.double-letter {
-    background-color: lightblue;
-}
+
+.triple-word { background-color: red; }
+.triple-word::after { content: "TW"; }
+
+.triple-letter { background-color: rgb(98, 98, 226); }
+.triple-letter::after { content: "TL"; }
+
+.double-word { background-color: lightcoral; }
+.double-word::after { content: "DW"; }
+
+.double-letter { background-color: lightblue; }
+.double-letter::after { content: "DL"; }
 
 .tile-tray,
 .tile-ingame {
@@ -72,19 +79,20 @@ span {
     box-shadow: 3px 3px 10px rgba(0,0,0,0.3); /* creates a soft shadow */
     border: 0.5px solid black;
     border-radius: 22%; /* creates slightly rounded corners */
-    height: 38px;
-    width: 38px;
+    height: 39px;
+    width: 39px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: #3d1b00; /* letter color */
     font-size: 24px;
     font-weight: bold;
+    z-index: 2;
 }
 
 .tile-ingame {
     position: absolute;
-    z-index: 1;
+    z-index: 999;
 }
 
 #tray {
