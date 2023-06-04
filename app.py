@@ -3,20 +3,17 @@ import random
 
 app = Flask(__name__)
 
+# Open scrabble list of words
 with open("scrabble-words.txt", "r") as file:
     words = file.read().split()
-# Words with 7 letters or less
-filtered_words = [word for word in words if len(word) <= 7]
 
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
 
-@app.route('/word', methods=['GET'])
-def get_word():    
 
-    # Default tiles with quantities
-    default_tiles = {
+class TileManager:
+    DEFAULT_TILES = {
         'A': {'points': 1, 'amount': 9},
         'B': {'points': 3, 'amount': 2},
         'C': {'points': 3, 'amount': 2},
@@ -44,56 +41,63 @@ def get_word():
         'Y': {'points': 4, 'amount': 2},
         'Z': {'points': 10, 'amount': 1},  # blank tiles
     }
-    # In game tiles
-    current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tiles.items()}
-    
-    first_Turn = True
-    word_not_in_board = True
-    while word_not_in_board:
-        if (first_Turn): # return word from scrabble dictionary thats 7 letters or less
-            word = random.choice(filtered_words)
-            first_Turn = False
-        else:
-            word = random.choice(words)
 
-        # split word into array of letters
-        word_letters = list(word)
+    def __init__(self):
+        self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tiles.items()}
 
-        counter = 0 # tiles removed
-        enough_tiles = True
-        for letter in word_letters:
-            if current_tiles[letter]['amount'] > 0:
-                current_tiles[letter]['amount'] -= 1
-                counter += 1
-            else: # if not enough tiles
-                for letter in word_letters[:counter]: # add previous letter tiles back
-                    current_tiles[letter]['amount'] += 1
-                enough_tiles = False
-                first_Turn = True
-                break # break inner loop if not enough tiles
-        
-        if enough_tiles:
-            counter = 0
-            break # break outer loop
-
-    def player_tiles(current_tiles, num_tiles):
+    def player_tiles(self, num_tiles):
         tile_rack = []
-
         # list of available letter tiles
-        tile_letters = [letter for letter, data in current_tiles.items() if data['amount'] > 0]
-        
+        tile_letters = [letter for letter, data in self.current_tiles.items() if data['amount'] > 0]
         # add random, available tiles to tile_rack
         for _ in range(num_tiles):
             if tile_letters:
                 selected_tile = random.choice(tile_letters)
                 tile_rack.append(selected_tile)
-                current_tiles[selected_tile]['amount'] -= 1
-
+                self.current_tiles[selected_tile]['amount'] -= 1
         return tile_rack
+
+
+class WordManager:
+    def __init__(self):
+        self.filtered_words = [word for word in words if len(word) <= 7]
+        self.tile_manager = TileManager()
     
-    # Makes data tuples to preserve order
-    
-    tiles = player_tiles(current_tiles, 7)
+    def select_first_word(self):
+        # Words with 7 letters or less
+        filtered_words = [word for word in words if len(word) <= 7]
+        
+        word_not_in_board = True
+        while word_not_in_board:
+            word = random.choice(filtered_words)
+
+            # split word into array of letters
+            word_letters = list(word)
+
+            counter = 0 # tiles removed
+            enough_tiles = True
+
+            # Verifies if there are enough tiles to create the word
+            for letter in word_letters:
+                if current_tiles[letter]['amount'] > 0:
+                    current_tiles[letter]['amount'] -= 1
+                    counter += 1
+                else: # if not enough tiles
+                    for letter in word_letters[:counter]: # add previous letter tiles back
+                        current_tiles[letter]['amount'] += 1
+                    enough_tiles = False
+                    break # break inner loop if not enough tiles
+            if enough_tiles:
+                counter = 0
+                break # break outer loop
+        return word
+
+
+@app.route('/word', methods=['GET'])
+def send_word():    
+    word_manager = WordManager()
+    word = word_manager.select_first_word()
+    tiles = word_manager.tile_manager.player_tiles(7)
     print(word, tiles)
     return jsonify({"word": word, "tiles": tiles})
 
