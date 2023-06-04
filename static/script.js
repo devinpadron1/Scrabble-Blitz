@@ -4,9 +4,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
     fetch('http://127.0.0.1:5000/word')
     .then(response => response.json())
     .then(data => {
-        const wordString = data.word;
-        const playerTiles = data.tiles;
-        loadWord(wordString);
+        let wordString = data.word;
+        let playerTiles = data.tiles;
+        let startPosition = Number(data.position);
+        let orientation = data.orientation;
+        loadWord(wordString, startPosition, orientation);
         loadTiles(playerTiles);
     })
     .catch((error) => {
@@ -47,29 +49,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
     function dragStart(e) {
         e.dataTransfer.setData('text/plain', e.target.id);
         e.dataTransfer.effectAllowed = "move";
+        e.target.style.opacity = '0.01'; 
         e.stopPropagation();
         console.log('Drag Start');
     }
-    
-    function dragEnd(e) {
-        console.log('Drag End');
-    }
-    
-    function dragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
     function dragEnter(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-    
+    function dragEnd(e) {
+        e.target.style.opacity = '1';
+        console.log('Drag End');
+    }   
+    function dragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }   
     function dragLeave(e) {
         e.stopPropagation();
         console.log('Drag Leave');
     }
-    
     function drop(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -95,38 +94,30 @@ document.addEventListener("DOMContentLoaded", function(event) {
         tileDiv.classList.add("tile");
         tileDiv.addEventListener('dragstart', dragStart);
         tileDiv.addEventListener('dragend', dragEnd);
-        let points = letterValues[letter];
-        // tileDiv.textContent += points;
         tileCount++;
         return tileDiv
     }
 
-    function loadWord(wordString) {
+    function tileWordGenerator(letter, id) {
+        const tileDiv = document.createElement('div');
+        tileDiv.textContent = letter; // Set the text content of the <div> element
+        tileCount++;
+        return tileDiv
+    }
+
+    function loadWord(wordString, position, orientation) {
         // Load Word
         let wordLength = wordString.length;
 
-        // Pick random letter to be in center square           
-        let randomIndex = Math.floor(Math.random() * wordLength);
-        
-        // Pick orientation
-        let vertical = false;
-        let horizontal = false;
-        let vertOrHor = Math.random(); // Vertical or Horizontal
-        if (vertOrHor >= .5) {
-           vertical = true;
-        } else {
-            horizontal = true;
-        }
-
         // Build out word
         for (let i=0; i < wordLength; i++) {
-            let tileDiv = tileGenerator(wordString[i], `wordTile${i}`);
+            let tileDiv = tileWordGenerator(wordString[i], `wordTile${i}`);
             tileDiv.className = 'tile-ingame'; // Set the class name of the <div> element
-            if (vertical) {
-                let container = document.getElementById(`grid${6+i-randomIndex}_6`);
+            if (orientation == "vertical") {
+                let container = document.getElementById(`grid${6+i-position}_6`);
                 container.appendChild(tileDiv);
-            } else if (horizontal) {
-                let container = document.getElementById(`grid6_${6+i-randomIndex}`);
+            } else if (orientation == "horizontal") {
+                let container = document.getElementById(`grid6_${6+i-position}`);
                 container.appendChild(tileDiv);
             }
         }
@@ -221,10 +212,3 @@ document.addEventListener("DOMContentLoaded", function(event) {
     // When word is submitted, 
         // verify that word is valid
         // if valid then
-
-// TODO: Account for instance where word goes out of bounds
-
-// TODO: Ensure that initial word that is loaded does not go out of bounds
-
-// DID: Reduce grid size from 15x15 to 11x11
-// DID: Remove blank tile
