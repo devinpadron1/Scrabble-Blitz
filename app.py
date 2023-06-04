@@ -101,20 +101,40 @@ class WordManager:
         return random_letter_index, orientation
 
 
+class BoardManager:
+    def __init__(self, size=11): # Generate board
+        self.board = [['_' for _ in range(size)] for _ in range(size)]
+
+    def add_word(self, word, position, orientation):
+        row, col = 5, 5 # Middle of board
+        if orientation == "horizontal":
+            for i, letter in enumerate(word):
+                self.board[row][col+i-position] = letter
+        elif orientation == "vertical":
+            for i, letter in enumerate(word):
+                self.board[row+i-position][col] = letter
+
+    def display(self):
+        for row in self.board:
+            print(' '.join(row))
+
+
+
 @app.route('/word', methods=['GET'])
 def send_word():    
     word_manager = WordManager()
+    board_manager = BoardManager()
+
     word = word_manager.select_first_word()
     tiles = word_manager.tile_manager.player_tiles(7)
     position, orientation = word_manager.initial_position(word)
+    board_manager.add_word(word, position, orientation)
+    board_manager.display()
+
     print(word, tiles, position, orientation)
-    return jsonify({"word": word, "tiles": tiles, "start": position, "orientation": orientation})
+
+    return jsonify({"word": word, "tiles": tiles, "position": position, "orientation": orientation})
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
-
-# TODO: Add logic that shows the position of the first word.
-    # Communicate starting position to JS
-
-# TODO: Ensure that initial word that is loaded does not go out of bounds
