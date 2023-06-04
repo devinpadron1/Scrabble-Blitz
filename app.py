@@ -42,10 +42,10 @@ class TileManager:
         'Z': {'points': 10, 'amount': 1},  # blank tiles
     }
 
-    def __init__(self):
+    def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in default_tiles.items()}
 
-    def player_tiles(self, num_tiles):
+    def player_tiles(self, num_tiles): # Current player-held tiles
         tile_rack = []
         # list of available letter tiles
         tile_letters = [letter for letter, data in self.current_tiles.items() if data['amount'] > 0]
@@ -104,3 +104,6 @@ def send_word():
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
+
+# TODO: Add logic that shows the position of the first word.
+    # Communicate starting position to JS
