@@ -39,12 +39,10 @@ DEFAULT_TILES = {
 BONUS_SQUARES = {
     'TW': [[0,0], [0,10], [10,0], [10,10]],
     'TL': [[0,5], [2,2], [2,8], [5,0], [5,10], [8,2], [8,8], [10,5]],
-    'DW': [[1,1], [1,9], [3,3], [3,7], [7,3], [7,7], [9,1], [9,9]],
+    'DW': [[1,1], [1,9], [3,3], [3,7], [5,5], [7,3], [7,7], [9,1], [9,9]],
     'DL': [[0,3], [0,7], [2,5], [3,0], [3,10], [4,4], [4,6],
            [5,2], [5,8], [6,4], [6,6], [7,0], [7,10], [8,5], [10,3], [10,7]],
 }
-
-# 93,130
 
 @app.route('/', methods=['GET'])
 def home():
@@ -110,15 +108,15 @@ class WordManager:
         return random_letter_index, orientation
     
     def check_under(self, row, col):
-        if row <= 10:
+        if row < 10:
             return board_manager.board[row + 1][col]
         else:
-            return 1 
+            return "1"
     def check_right(self, row, col):
-        if col <= 10:
+        if col < 10:
             return board_manager.board[row][col + 1]
         else: 
-            return 1
+            return "1"
 
     def check_word(self, row, col, direction):
         counter = 0
@@ -145,7 +143,6 @@ class WordManager:
             else:
                 potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
                 return taken_spaces
-
         elif direction == "right":
             element_contains_letter = self.check_right(row, col)[0].isalpha()
             while element_contains_letter:
@@ -205,17 +202,26 @@ class BoardManager:
         # start = [i, j] | end = [i, j] | taken_pairs =  [[i, j], [i, j], [i, j]]
         taken_pairs = []
         if orientation == "horizontal":
-            for n in range(end[1] - start[1]):
+            for n in range(end[1] - start[1] + 1):
                 # if there's a letter above or below, dont add it
-                element_above = self.board[start[0] + 1][start[1] + n].isalpha()
-                element_below = self.board[start[0] - 1][start[1] + n].isalpha()
+                
+                # start = [10, 8] | end = [10, 10] 
+                
+                element_above = self.board[start[0] - 1][start[1] + n].isalpha()
+                if start[0] == 10:
+                    element_below = "0"
+                else: 
+                    element_below = self.board[start[0] + 1][start[1] + n].isalpha()
                 if not element_above or not element_below:
                     taken_pairs.append([start[0], start[1] + n])
         elif orientation == "vertical":
             for n in range(end[0] - start[0]):
                 # if there's a letter to the sides, don't add it
                 element_left = self.board[start[0] + n][start[1] - 1].isalpha()
-                element_right = self.board[start[0] + n][start[1] + 1].isalpha()
+                if start[1] == 10:
+                    element_right = "0"
+                else:
+                    element_right = self.board[start[0] + n][start[1] + 1].isalpha()
                 if not element_left or not element_right:
                     taken_pairs.append([start[0] + n, start[1]])
         return taken_pairs
@@ -269,10 +275,10 @@ def submit():
                 if grid_element.isalpha():
                     # Right-most edge case
                     if i == 10:
-                        taken_spaces.extend(word_manager.check_word(i, j, "under")) # Check for letters under
+                        taken_spaces.extend(word_manager.check_word(i, j, "right")) # Check for letters under
                     # Bottom-most edge case
                     if j == 10:
-                        taken_spaces.extend(word_manager.check_word(i, j, "right")) # Check for letter to the right
+                        taken_spaces.extend(word_manager.check_word(i, j, "under")) # Check for letter to the right
                     if i < 10 and j < 10:
                         element_contains_letter = word_manager.check_under(i, j)[0].isalpha()
                         if element_contains_letter:
