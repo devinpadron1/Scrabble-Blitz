@@ -36,6 +36,16 @@ DEFAULT_TILES = {
     'Z': {'points': 10, 'amount': 1},  # blank tiles
 }
 
+BONUS_SQUARES = {
+    'TW': [[0,0], [0,10], [10,0], [10,10]],
+    'TL': [[0,5], [2,2], [2,8], [5,0], [5,10], [8,2], [8,8], [10,5]],
+    'DW': [[1,1], [1,9], [3,3], [3,7], [7,3], [7,7], [9,1], [9,9]],
+    'DL': [[0,3], [0,7], [2,5], [3,0], [3,10], [4,4], [4,6],
+           [5,2], [5,8], [6,4], [6,6], [7,0], [7,10], [8,5], [10,3], [10,7]],
+}
+
+# 93,130
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
@@ -100,19 +110,25 @@ class WordManager:
         return random_letter_index, orientation
     
     def check_under(self, row, col):
-        return board_manager.board[row + 1][col]  
+        if row <= 10:
+            return board_manager.board[row + 1][col]
+        else:
+            return 1 
     def check_right(self, row, col):
-        return board_manager.board[row][col + 1]
+        if col <= 10:
+            return board_manager.board[row][col + 1]
+        else: 
+            return 1
 
     def check_word(self, row, col, direction):
         counter = 0
         potential_word = ""
         taken_spaces = []
         if direction == "under":
-            element_contains_letter = self.check_under(row, col).isalpha()
+            element_contains_letter = self.check_under(row, col)[0].isalpha()
             while element_contains_letter:
                 if row + counter <= 10:
-                    letter = board_manager.board[row + counter][col]
+                    letter = board_manager.board[row + counter][col][0]
                     if letter == "_":
                         element_contains_letter = False
                     else:
@@ -122,7 +138,7 @@ class WordManager:
                     element_contains_letter = False
             if potential_word in words:
                 start_coord = [row, col]
-                end_coord = [row + counter, col]
+                end_coord = [row + counter - 1, col]
                 print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
                 taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "vertical")
                 return taken_spaces
@@ -131,10 +147,10 @@ class WordManager:
                 return taken_spaces
 
         elif direction == "right":
-            element_contains_letter = self.check_right(row, col).isalpha()
+            element_contains_letter = self.check_right(row, col)[0].isalpha()
             while element_contains_letter:
                 if col + counter <= 10:
-                    letter = board_manager.board[row][col + counter]
+                    letter = board_manager.board[row][col + counter][0]
                     if letter == "_":
                         element_contains_letter = False
                     else:
@@ -144,7 +160,7 @@ class WordManager:
                     element_contains_letter = False
             if potential_word in words:
                 start_coord = [row, col]
-                end_coord = [row, col + counter]
+                end_coord = [row, col + counter - 1]
                 print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
                 taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "horizontal")
                 return taken_spaces
@@ -155,7 +171,6 @@ class WordManager:
     def variable_reset(self):
         word = ""
         array = []
-        print("No valid words on board.")
         return word, array, array, array
 
 class BoardManager:
@@ -246,33 +261,25 @@ def submit():
     ## Define existing words
     # Loop through the grid
     taken_spaces = []
-    taken_spaces_master = []
  
     for i in range(11):
         for j in range(11):
             if [i, j] not in taken_spaces: 
-                grid_element = board_manager.board[i][j]
-                if grid_element[0].isalpha():
+                grid_element = board_manager.board[i][j][0]
+                if grid_element.isalpha():
                     # Right-most edge case
                     if i == 10:
-                        taken_spaces.append(word_manager.check_word(i, j, "under")) # Check for letters under
+                        taken_spaces.extend(word_manager.check_word(i, j, "under")) # Check for letters under
                     # Bottom-most edge case
                     if j == 10:
-                        taken_spaces.append(word_manager.check_word(i, j, "right")) # Check for letter to the right
+                        taken_spaces.extend(word_manager.check_word(i, j, "right")) # Check for letter to the right
                     if i < 10 and j < 10:
-                        element_contains_letter = word_manager.check_under(i, j).isalpha()
+                        element_contains_letter = word_manager.check_under(i, j)[0].isalpha()
                         if element_contains_letter:
-                            taken_spaces = word_manager.check_word(i, j, "under")
-                            taken_spaces_master.append(taken_spaces) # TODO: REMOVE
-                            print(taken_spaces) # TODO: REMOVE
-                        element_contains_letter = word_manager.check_right(i, j).isalpha()
+                            taken_spaces.extend(word_manager.check_word(i, j, "under"))
+                        element_contains_letter = word_manager.check_right(i, j)[0].isalpha()
                         if element_contains_letter:
-                            taken_spaces.append(word_manager.check_word(i, j, "right"))
-    print(board_manager.board)
-
-    # TODO: JUNE 6TH, 2023 - 11:30AM
-    ##### Work through issues with taken spaces.
-    ##### Potential issue where taken spaces gets replaced everytime a new word is out
+                            taken_spaces.extend(word_manager.check_word(i, j, "right"))
 
     # TODO: Submit not recognizing placed tiles
     # TODO: Submit is finding valid word within a word
