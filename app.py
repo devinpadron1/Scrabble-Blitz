@@ -62,7 +62,7 @@ class WordManager:
         self.filtered_words = [word for word in words if len(word) <= 7]
         self.tile_manager = TileManager()
     
-    def select_first_word(self):        
+    def select_first_word(self):                
         word_not_in_board = True
         while word_not_in_board:
             word = random.choice(self.filtered_words)
@@ -103,7 +103,10 @@ class BoardManager:
     def __init__(self, size=11): # Generate board
         self.board = [['_' for _ in range(size)] for _ in range(size)]
 
-    def add_word(self, word, position, orientation):
+    def clear_board(self, size=11):
+        self.board = [['_' for _ in range(size)] for _ in range(size)]
+
+    def add_first_word(self, word, position, orientation):
         row, col = 5, 5 # Middle of board
         if orientation == "horizontal":
             for i, letter in enumerate(word):
@@ -112,29 +115,30 @@ class BoardManager:
             for i, letter in enumerate(word):
                 self.board[row+i-position][col] = letter
 
-    def add_letter(self, letter, row, col, tileID):
+    def add_letter(self, row, col, tileID):
         # If tile found in board, remove it
         for i in range(len(self.board)):
             for j in range(len(self.board[i])):
                 if self.board[i][j] == tileID:
                     self.board[i][j] = '_'
-        self.board[row][col] = tileID
-
+        self.board[row-1][col-1] = tileID
 
     def display(self):
         for row in self.board:
             print(' '.join(cell[0] for cell in row))
 
 
+board_manager = BoardManager()
+word_manager = WordManager()
+
 @app.route('/word', methods=['GET'])
 def send_word():    
-    word_manager = WordManager()
-    board_manager = BoardManager()
-
     word = word_manager.select_first_word()
     tiles = word_manager.tile_manager.player_tiles(7)
     position, orientation = word_manager.initial_position(word)
-    board_manager.add_word(word, position, orientation)
+    
+    board_manager.clear_board()
+    board_manager.add_first_word(word, position, orientation)
     board_manager.display()
 
     print(word, tiles, position, orientation)
@@ -146,26 +150,123 @@ def update_tile_position():
     data = request.get_json()
     print(f"Received tile position: {data}")
 
-    board_manager = BoardManager()
-    # TODO: Do something with Data
+    # Data Assignment
     tileID = data['tileID']
-
     letter = data['tileID'][0]
     position = data['position'].replace('grid','')
     row, col = map(int, position.split('_'))
 
-    board_manager.add_letter(letter, row, col, tileID)
+    board_manager.add_letter(row, col, tileID)
     board_manager.display()
 
     print(letter, row, col)
     return '', 200
 
+@app.route('/submit', methods=['POST'])
+def submit():
+    print(f"Received submit request")
+    ## Define existing words
+    # Loop through the grid
+    for i in range(11):
+        for j in range(11):
+            grid_element = board_manager.self.board[i][j]
+            if grid_element.isalpha(): # TODO: grid element might return letter+id
+                # Right-most edge case
+                if i == 10:
+                    return check_word(i, j, "under") # Check for letters under
+                # Bottom-most edge case
+                if j == 10:
+                    return check_word(i, j, "right") # Check for letter to the right
+                if i < 10 and j < 10:
+                    element_contains_letter = check_under()
+                    if element_contains_letter:
+                        return check_word(i, j, "under")
+                    element_contains_letter = check_right()
+                    if element_contains_letter:
+                        return check_word(i, j, "right")
 
+    def taken_spaces(start, end, orientation):
+        # start = [i, j]
+        # end = [i, j]
+        # taken_pairs =  [[i, j], [i, j], [i, j]]
+        taken_pairs = []
+        if orientation == "horizontal":
+            for n in range(start[1] - end[1]):
+                taken_pairs += [start[0], start[1 + n]]
+        elif orientation == "vertical":
+            for n in range(start[0] - end[0]):
+                taken_pairs += [start[1 + n], start[1]]
+        return taken_pairs
+
+    def check_under(row, col):
+        return board_manager.self.board[row][col+1]  
+    def check_right(row, col):
+        return board_manager.self.board[row+1][col]
+
+    def check_word(row, col, direction):
+        counter = 0
+        potential_word = ""
+        if direction == "under":
+            element_contains_letter = check_under()
+            while element_contains_letter:
+                if col + counter <= 10:
+                    letter = board_manager.self.board[row][col+counter]
+                    if letter == "_":
+                        element_contains_letter = False
+                    else:
+                        potential_word += letter
+                        counter += 1
+                        potential_word, start_coord, end_coord
+                else:
+                    element_contains_letter = False
+            if potential_word in words:
+                start_coord = [row, col]
+                end_coord = [row + counter, col]
+                return potential_word, start_coord, end_coord
+        elif direction == "right":
+            element_contains_letter = check_right()
+            while element_contains_letter:
+                if row + counter <= 10:
+                    letter = board_manager.self.board[row+counter][col]
+                    if letter == "_":
+                        element_contains_letter = False
+                    else:
+                        potential_word += letter
+                        counter += 1
+                else:
+                    element_contains_letter = False
+            if potential_word in words:
+                start_coord = [row, col]
+                end_coord = [row, col + counter]
+                return potential_word, start_coord, end_coord
+
+                # loop through remainder of letters until blank
+                # add letters to string
+                # check string against dictionary
+                # Make sure letter is part of a word
+                # Does it have a letter above it?
+    
+        # if it is, then disregard the letters that make up the word grid.
+
+    print(board_manager.board)
+
+    # if no letter is within one square of existing words, invalid submission
+
+
+    # Verify that letter(s) placed are valid words
+    # word needs to:
+        # be in word (scrabble dictionary)
+        # be attached to an existing word
+        # Instance where you create a word parallel and next to another
+            # Every letter needs to be checked horizontally & vertically
+
+    return '', 200
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
 
 # TODO: Add points functionality. Bonus squares, etc.
+# TODO: Ensure python grid shows all words
 
 # DID: Add POST route to receive updates on tile position in board.

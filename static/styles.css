@@ -41,7 +41,7 @@ body {
     height: 100%;
     width: 48px;
     height: 48px;
-    background-color: rgb(235, 209, 177);
+    background-color: rgb(227, 226, 226);
     border: 1px solid white;
     position: relative;
 }
@@ -62,7 +62,7 @@ span {
     font-size: large;
 }
 
-.triple-word { background-color: red; }
+.triple-word { background-color: rgb(251, 35, 35); }
 .triple-word::after { content: "TW"; }
 
 .triple-letter { background-color: rgb(98, 98, 226); }
@@ -128,4 +128,10 @@ span {
 #timer {
     align-self: flex-end;
     margin-right: 20px;
+}
+
+/* Buttons */
+#play-button,
+#submit {
+    background-color: lightgreen;
 }

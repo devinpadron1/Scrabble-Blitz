@@ -185,9 +185,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
             
             // Create sets for each special square
             const doubleLetter = new Set(["1_4", "1_8", "3_6", "4_1", "4_11", "5_5", "5_7", "6_3", "6_9", "7_5", "7_7", "8_1", "8_11", "9_6", "11_4", "11_8"]);
-            const tripleLetter = new Set(["3_3", "3_9", "9_3", "9_9"]);
+            const tripleLetter = new Set(["1_6", "3_3", "3_9", "6_1", "6_11", "9_3", "9_9", "11_6"]);
             const doubleWord = new Set(["2_2", "2_10", "4_4", "4_8", "8_4", "8_8", "10_2", "10_10"]);
-            const tripleWord = new Set(["1_1", "1_6", "1_11", "6_1", "6_11", "11_1", "11_6", "11_11"]);
+            const tripleWord = new Set(["1_1", "1_11", "11_1", "11_11"]);
 
             let position = `${i}_${j}`;
             
@@ -227,6 +227,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.getElementById('game-screen').style.display = 'flex';
         startGame(); 
     });
+
+    document.getElementById('submit').addEventListener('click', function() {
+        fetch('http://127.0.0.1:5000/submit', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    })
     
     function startGame() {
         // Start the game: 
