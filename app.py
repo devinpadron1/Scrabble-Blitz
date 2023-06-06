@@ -100,41 +100,19 @@ class WordManager:
         return random_letter_index, orientation
     
     def check_under(self, row, col):
-        return board_manager.board[row][col+1]  
+        return board_manager.board[row + 1][col]  
     def check_right(self, row, col):
-        return board_manager.board[row+1][col]
+        return board_manager.board[row][col + 1]
 
     def check_word(self, row, col, direction):
         counter = 0
         potential_word = ""
         taken_spaces = []
         if direction == "under":
-            element_contains_letter = self.check_under(row, col)
-            while element_contains_letter:
-                if col + counter <= 10:
-                    letter = board_manager.board[row][col+counter]
-                    if letter == "_":
-                        element_contains_letter = False
-                    else:
-                        potential_word += letter
-                        counter += 1
-                else:
-                    element_contains_letter = False
-            if potential_word in words:
-                start_coord = [row, col]
-                end_coord = [row, col + counter]
-                print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "vertical")
-                return start_coord, end_coord, taken_spaces
-            else:
-                potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
-                return start_coord, end_coord, taken_spaces
-
-        elif direction == "right":
-            element_contains_letter = self.check_right(row, col)
+            element_contains_letter = self.check_under(row, col).isalpha()
             while element_contains_letter:
                 if row + counter <= 10:
-                    letter = board_manager.board[row+counter][col]
+                    letter = board_manager.board[row + counter][col]
                     if letter == "_":
                         element_contains_letter = False
                     else:
@@ -146,11 +124,33 @@ class WordManager:
                 start_coord = [row, col]
                 end_coord = [row + counter, col]
                 print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "horizontal")
-                return start_coord, end_coord, taken_spaces
+                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "vertical")
+                return taken_spaces
             else:
                 potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
-                return start_coord, end_coord, taken_spaces
+                return taken_spaces
+
+        elif direction == "right":
+            element_contains_letter = self.check_right(row, col).isalpha()
+            while element_contains_letter:
+                if col + counter <= 10:
+                    letter = board_manager.board[row][col + counter]
+                    if letter == "_":
+                        element_contains_letter = False
+                    else:
+                        potential_word += letter
+                        counter += 1
+                else:
+                    element_contains_letter = False
+            if potential_word in words:
+                start_coord = [row, col]
+                end_coord = [row, col + counter]
+                print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
+                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "horizontal")
+                return taken_spaces
+            else:
+                potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
+                return taken_spaces
     
     def variable_reset(self):
         word = ""
@@ -190,21 +190,19 @@ class BoardManager:
         # start = [i, j] | end = [i, j] | taken_pairs =  [[i, j], [i, j], [i, j]]
         taken_pairs = []
         if orientation == "horizontal":
-            for n in range(start[1] - end[1]):
+            for n in range(end[1] - start[1]):
                 # if there's a letter above or below, dont add it
                 element_above = self.board[start[0] + 1][start[1] + n].isalpha()
                 element_below = self.board[start[0] - 1][start[1] + n].isalpha()
                 if not element_above or not element_below:
-                    taken_pairs += [start[0], start[1] + n]
-                    element_above = element_below = False
+                    taken_pairs.append([start[0], start[1] + n])
         elif orientation == "vertical":
-            for n in range(start[0] - end[0]):
+            for n in range(end[0] - start[0]):
                 # if there's a letter to the sides, don't add it
                 element_left = self.board[start[0] + n][start[1] - 1].isalpha()
                 element_right = self.board[start[0] + n][start[1] + 1].isalpha()
                 if not element_left or not element_right:
-                    taken_pairs += [start[0] + n, start[1]]
-                    element_left = element_right = False
+                    taken_pairs.append([start[0] + n, start[1]])
         return taken_pairs
 
 
@@ -248,6 +246,7 @@ def submit():
     ## Define existing words
     # Loop through the grid
     taken_spaces = []
+    taken_spaces_master = []
  
     for i in range(11):
         for j in range(11):
@@ -256,25 +255,31 @@ def submit():
                 if grid_element[0].isalpha():
                     # Right-most edge case
                     if i == 10:
-                        word, start, end = word_manager.check_word(i, j, "under") # Check for letters under
+                        taken_spaces.append(word_manager.check_word(i, j, "under")) # Check for letters under
                     # Bottom-most edge case
                     if j == 10:
-                        word, start, end = word_manager.check_word(i, j, "right") # Check for letter to the right
+                        taken_spaces.append(word_manager.check_word(i, j, "right")) # Check for letter to the right
                     if i < 10 and j < 10:
-                        element_contains_letter = word_manager.check_under(i, j)
+                        element_contains_letter = word_manager.check_under(i, j).isalpha()
                         if element_contains_letter:
-                            word, start, end = word_manager.check_word(i, j, "under")
-                        element_contains_letter = word_manager.check_right(i, j)
+                            taken_spaces = word_manager.check_word(i, j, "under")
+                            taken_spaces_master.append(taken_spaces) # TODO: REMOVE
+                            print(taken_spaces) # TODO: REMOVE
+                        element_contains_letter = word_manager.check_right(i, j).isalpha()
                         if element_contains_letter:
-                            word, start, end = word_manager.check_word(i, j, "right")
-
+                            taken_spaces.append(word_manager.check_word(i, j, "right"))
     print(board_manager.board)
 
+    # TODO: JUNE 6TH, 2023 - 11:30AM
+    ##### Work through issues with taken spaces.
+    ##### Potential issue where taken spaces gets replaced everytime a new word is out
+
+    # TODO: Submit not recognizing placed tiles
+    # TODO: Submit is finding valid word within a word
+    
     # if no letter is within one square of existing words, invalid submission
 
-    # Verify that letter(s) placed are valid words
     # word needs to:
-        # be in word (scrabble dictionary)
         # be attached to an existing word
         # Instance where you create a word parallel and next to another
             # Every letter needs to be checked horizontally & vertically
