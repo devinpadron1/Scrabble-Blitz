@@ -122,53 +122,52 @@ class WordManager:
         counter = 0
         potential_word = ""
         taken_spaces = []
-        if direction == "under":
-            element_contains_letter = self.check_under(row, col)[0].isalpha()
-            while element_contains_letter:
-                if row + counter <= 10:
-                    letter = board_manager.board[row + counter][col][0]
-                    if letter == "_":
-                        element_contains_letter = False
-                    else:
-                        potential_word += letter
-                        counter += 1
-                else:
+        orientation = "horizontal" if direction == "right" else "vertical"
+        check_func = self.check_right if direction == "right" else self.check_under
+
+        element_contains_letter = check_func(row, col)[0].isalpha()
+        while element_contains_letter:
+            if (col if direction == "right" else row) + counter <= 10:
+                letter = board_manager.board[row + counter if direction == "under" else row][col if direction == "under" else col + counter][0]
+                if letter == "_":
                     element_contains_letter = False
-            if potential_word in words:
-                start_coord = [row, col]
-                end_coord = [row + counter - 1, col]
-                print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "vertical")
-                return taken_spaces
-            else:
-                potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
-                return taken_spaces
-        elif direction == "right":
-            element_contains_letter = self.check_right(row, col)[0].isalpha()
-            while element_contains_letter:
-                if col + counter <= 10:
-                    letter = board_manager.board[row][col + counter][0]
-                    if letter == "_":
-                        element_contains_letter = False
-                    else:
-                        potential_word += letter
-                        counter += 1
                 else:
-                    element_contains_letter = False
-            if potential_word in words:
-                start_coord = [row, col]
-                end_coord = [row, col + counter - 1]
-                print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-                taken_spaces = board_manager.taken_spaces(start_coord, end_coord, "horizontal")
-                return taken_spaces
+                    potential_word += letter
+                    counter += 1
             else:
-                potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
-                return taken_spaces
+                element_contains_letter = False
+        if potential_word in words:
+            start_coord = [row, col]
+            end_coord = [row + counter - 1, col] if direction == "under" else [row, col + counter - 1]
+            print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
+            taken_spaces = board_manager.taken_spaces(start_coord, end_coord, orientation)
+            return potential_word, taken_spaces
+        else:
+            potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
+            return potential_word, taken_spaces
     
     def variable_reset(self):
         word = ""
         array = []
         return word, array, array, array
+
+    def intercept_check(self, words): # Do the words contain a square that intercepts another?
+        words_to_remove = set()
+        for word1, coords1 in words.items():
+            # flag to indicate if the word has any shared coordinate
+            has_shared_coordinate = False
+            for word2, coords2 in words.items():
+                if word1 != word2:  # avoid self comparison
+                    # check for shared coordinates
+                    if any(coord in coords2 for coord in coords1):
+                        has_shared_coordinate = True
+                        break  # no need to check further
+            # if the word has no shared coordinate, add it to removal set
+            if not has_shared_coordinate:
+                words_to_remove.add(word1)
+        # remove words that have no shared coordinate
+        for word in words_to_remove:
+            del words[word]
 
 class BoardManager:
     def __init__(self, size=11): # Generate board
@@ -203,10 +202,7 @@ class BoardManager:
         taken_pairs = []
         if orientation == "horizontal":
             for n in range(end[1] - start[1] + 1):
-                # if there's a letter above or below, dont add it
-                
-                # start = [10, 8] | end = [10, 10] 
-                
+                # if there's a letter above or below, dont add it              
                 element_above = self.board[start[0] - 1][start[1] + n].isalpha()
                 if start[0] == 10:
                     element_below = "0"
@@ -265,9 +261,16 @@ def update_tile_position():
 def submit():
     print(f"Received submit request")
     ## Define existing words
-    # Loop through the grid
     taken_spaces = []
- 
+    valid_words = {}
+    
+    def check_and_add_word(i, j, direction):
+        word, taken = word_manager.check_word(i, j, direction)
+        if word != "":
+            taken_spaces.extend(taken)
+            valid_words[word] = taken
+
+    # Loop through the grid, recognizing any valid word
     for i in range(11):
         for j in range(11):
             if [i, j] not in taken_spaces: 
@@ -275,21 +278,43 @@ def submit():
                 if grid_element.isalpha():
                     # Right-most edge case
                     if i == 10:
-                        taken_spaces.extend(word_manager.check_word(i, j, "right")) # Check for letters under
-                    # Bottom-most edge case
+                        check_and_add_word(i, j, "right")
                     if j == 10:
-                        taken_spaces.extend(word_manager.check_word(i, j, "under")) # Check for letter to the right
+                        check_and_add_word(i, j, "under")
                     if i < 10 and j < 10:
                         element_contains_letter = word_manager.check_under(i, j)[0].isalpha()
                         if element_contains_letter:
-                            taken_spaces.extend(word_manager.check_word(i, j, "under"))
+                            check_and_add_word(i, j, "under")
                         element_contains_letter = word_manager.check_right(i, j)[0].isalpha()
                         if element_contains_letter:
-                            taken_spaces.extend(word_manager.check_word(i, j, "right"))
+                            check_and_add_word(i, j, "right")
 
-    # TODO: Submit not recognizing placed tiles
-    # TODO: Submit is finding valid word within a word
+    print(valid_words)
+
+    board_manager.intercept_checker(valid_words) # checks if words have an intercepting square, if not, gets removed
+
+    # if not then remove word and coordinates from dictionary
+    # do all the valid words intercept?
+    # every valid word must share a square with another valid word
+
+    # add logic that invalidates word if it doesnt meet criteria 
+
+    # collect valid words and its initial and final coordinates
+    # are the words intersecting?
+        # if no 
+            # invalid_submission()
+                # return the tiles to the players rack
+    # are the words adequately spaced?
+        # if yes
+            # clear the rest of the board that doesnt contain the words.
+            # add tiles to rack until player has 7 total
+        # if no
+            # invalid_submision()
     
+    # def invalid_submission()
+        # add tiles back to player rack
+        # 
+
     # if no letter is within one square of existing words, invalid submission
 
     # word needs to:
