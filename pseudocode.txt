@@ -23,3 +23,35 @@ First version of app will be just one single word in the center
 
 Extra credit
     As the rounds pass, I want an animation to being in letters
+
+__________________________________________________________
+
+Example 1       Example 2
+ _C_             _C_
+ _AT             _AS
+ _TO             _TT
+                 __A
+                 __Y
+
+run_loop = True
+while run_loop
+    Loop through grid until a letter is reached
+
+    'C' is a potential word
+    check right and check under
+    if letter
+        add to potential word
+    else
+        stop checking
+    if a valid word
+        - capture orientation, start and end coordinates
+        - coordinates from start + 1 to end can only be examined 
+        in the opposite orientation of the word its part of
+            - In Example 1, 'A' and 'T' from CAT can only be examined
+            in the horizontal direction. If not then AT would be valid word
+        - run_loop = False
+    else
+        remove letter from board 
+        if letter next to it, remove until blank or wall is reached
+        run_loop = True
+
