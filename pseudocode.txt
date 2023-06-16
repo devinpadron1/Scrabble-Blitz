@@ -7,11 +7,10 @@ Initial Screen
         Game Timer 2min 5min Unlimited
 
 Game Screen
-    Board with words loaded
+    Board with word loaded
         Generate grid
             Ensure grid multipliers are in correct spots
             Ensure that words start from the middle
-        Learn how to load words
         Shuffle button
     Timer on top right
     Tray of letters
@@ -26,12 +25,13 @@ Extra credit
 
 __________________________________________________________
 
-Example 1       Example 2
- _C_             _C_
- _AT             _AS
- _TO             _TT
-                 __A
-                 __Y
+Example 1       Example 2       Example 3
+ _C_             _C_            _C_
+ _AT             _AS            _A_
+ _TO             _TT            _S_
+                 __A            _E_ Case is initially loaded
+                 __Y            _T_ When T is added, case not counted. 
+                                    Set is counted
 
 run_loop = True
 while run_loop
@@ -43,15 +43,19 @@ while run_loop
         add to potential word
     else
         stop checking
+        break
     if a valid word
         - capture orientation, start and end coordinates
         - coordinates from start + 1 to end can only be examined 
         in the opposite orientation of the word its part of
             - In Example 1, 'A' and 'T' from CAT can only be examined
             in the horizontal direction. If not then AT would be valid word
+            TODO: RESOLVES ISSUE WHERE WORD WITHIN WORD GETS COUNTED
         - run_loop = False
     else
         remove letter from board 
         if letter next to it, remove until blank or wall is reached
         run_loop = True
+
+    TODO: Example 2
 
