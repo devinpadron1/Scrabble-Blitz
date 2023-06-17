@@ -48,12 +48,106 @@ BONUS_SQUARES = {
 def home():
     return render_template('index.html')
 
+@app.route('/word', methods=['GET'])
+def load_initial_state():    
+    word = word_manager.get_first_word()
+    tiles = word_manager.tile_manager.get_player_tiles(7)
+    position, orientation = word_manager.initial_position(word)
+    
+    board_manager.clear_board()
+    board_manager.add_first_word(word, position, orientation) # Adds it to the Python grid
+    board_manager.display()
+
+    print(word, tiles, position, orientation)
+
+    return jsonify({"word": word, "tiles": tiles, "position": position, "orientation": orientation})
+
+@app.route('/tile-position', methods=['POST'])
+def update_tile_position():
+    data = request.get_json()
+    print(f"Received tile position: {data}")
+
+    # Data Assignment
+    tileID = data['tileID']
+    letter = data['tileID'][0]
+    position = data['position'].replace('grid','')
+    row, col = map(int, position.split('_'))
+
+    board_manager.add_letter(row, col, tileID)
+    board_manager.display()
+
+    print(letter, row, col)
+    return '', 200
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    print(f"Received submit request")
+    ## Define existing words
+    taken_spaces_horizontal = [] # Spaces wont be checked in horizontal direction
+    taken_spaces_vertical = []  # Same as ^ in vertical direction
+    valid_words = {}
+    
+    def check_and_add_word(row, col, direction): # Returns word and spaces it takes up
+        word, taken_hor, taken_ver = word_manager.check_word(row, col, direction) 
+        if word: # True if `word` is not an empty string
+            if direction == "right":
+                taken_spaces_horizontal.extend(taken_hor)
+                valid_words[word] = taken_hor
+            else: 
+                taken_spaces_vertical.extend(taken_ver)
+                valid_words[word] = taken_ver
+
+    # Check if a word can be formed in a direction
+    def check_word_direction(row, col, direction):
+        if word_manager.check_under(row, col)[0].isalpha() and direction == 'under':
+            check_and_add_word(row, col, "under")
+        elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
+            check_and_add_word(row, col, "right")
+
+    # Loop through the grid, recognizing any valid word
+    for i in range(11):
+        for j in range(11):
+            grid_element = board_manager.board[i][j][0]
+            position = [i, j]
+            # Skip the grid element if it is taken in both directions
+            if position in taken_spaces_vertical and position in taken_spaces_horizontal:
+                continue
+
+            if grid_element.isalpha():
+                if position not in taken_spaces_vertical and position not in taken_spaces_horizontal:
+                    # Edge cases
+                    if i == 10:
+                        check_and_add_word(i, j, 'right')
+                    elif j == 10:
+                        check_and_add_word(i, j, 'under')
+                    else:
+                        check_word_direction(i, j, 'under')
+                        check_word_direction(i, j, 'right')
+
+                elif position in taken_spaces_vertical:
+                    # Edge case
+                    if i == 10:
+                        check_and_add_word(i, j, 'right')
+                    else: 
+                        check_word_direction(i, j, 'right')
+
+                elif position in taken_spaces_horizontal:
+                    # Edge case
+                    if j == 10:
+                        check_and_add_word(i, j, 'under')
+                    else:
+                        check_word_direction(i, j, 'under')
+
+    print(valid_words)
+    word_manager.intercept_check(valid_words) # checks if words have an intercepting square, if not, gets removed
+
+    return '', 200
 
 class TileManager:
     def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
 
-    def player_tiles(self, num_tiles): # Generates player-held tiles
+    def get_player_tiles(self, num_tiles): # Generates player-held tiles
         tile_rack = []
         # Add random, available tiles to tile_rack
         for _ in range(num_tiles):
@@ -70,7 +164,7 @@ class WordManager:
         self.filtered_words = [word for word in words if len(word) <= 7]
         self.tile_manager = TileManager()
     
-    def select_first_word(self):                
+    def get_first_word(self):                
         word_not_in_board = True
         while word_not_in_board:
             word = random.choice(self.filtered_words)
@@ -97,6 +191,7 @@ class WordManager:
         return word
 
     def initial_position(self, word):
+        # Defines tile that goes in the middle
         random_letter_index = random.randint(0, len(word) - 1)
 
         # if word has 7 letters and the random letter is either first or last, shift the index
@@ -121,8 +216,8 @@ class WordManager:
     def check_word(self, row, col, direction):
         counter = 0
         potential_word = ""
-        taken_spaces = []
-        orientation = "horizontal" if direction == "right" else "vertical"
+        taken_horizontal = []
+        taken_vertical = []
         check_func = self.check_right if direction == "right" else self.check_under
 
         element_contains_letter = check_func(row, col)[0].isalpha()
@@ -140,16 +235,26 @@ class WordManager:
             start_coord = [row, col]
             end_coord = [row + counter - 1, col] if direction == "under" else [row, col + counter - 1]
             print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-            taken_spaces = board_manager.taken_spaces(start_coord, end_coord, orientation)
-            return potential_word, taken_spaces
+            if direction == "under":
+                taken_vertical = self.generate_coordinates(start_coord, end_coord)
+            else:
+                taken_horizontal = self.generate_coordinates(start_coord, end_coord)
+            return potential_word, taken_horizontal, taken_vertical
         else:
-            potential_word, start_coord, end_coord, taken_spaces = self.variable_reset()
-            return potential_word, taken_spaces
+            potential_word, start_coord, end_coord, taken_vertical, taken_horizontal = self.variable_reset()
+            return potential_word, taken_horizontal, taken_vertical
     
+    # Returns array of coordinates between two points
+    def generate_coordinates(self, start, end): 
+        if start[1] == end[1]: # Vertical word (constant y)
+            return [(x, start[1]) for x in range(start[0], end[0] + 1)]
+        elif start[0] == end[0]: # Horizontal word (constant x)
+            return [(start[0], y) for y in range(start[1], end[1] + 1)]
+
     def variable_reset(self):
         word = ""
-        array = []
-        return word, array, array, array
+        arrays = [list() for _ in range(4)] # creates 4 empty array lists
+        return word, *arrays # *arrays unpacks them
 
     def intercept_check(self, words): # Do the words contain a square that intercepts another?
         words_to_remove = set()
@@ -197,131 +302,39 @@ class BoardManager:
         for row in self.board:
             print(' '.join(cell[0] for cell in row))
 
-    def taken_spaces(self, start, end, orientation):
-        # start = [i, j] | end = [i, j] | taken_pairs =  [[i, j], [i, j], [i, j]]
-        taken_pairs = []
-        if orientation == "horizontal":
-            for n in range(end[1] - start[1] + 1):
-                # if there's a letter above or below, dont add it              
-                element_above = self.board[start[0] - 1][start[1] + n].isalpha()
-                if start[0] == 10:
-                    element_below = "0"
-                else: 
-                    element_below = self.board[start[0] + 1][start[1] + n].isalpha()
-                if not element_above or not element_below:
-                    taken_pairs.append([start[0], start[1] + n])
-        elif orientation == "vertical":
-            for n in range(end[0] - start[0]):
-                # if there's a letter to the sides, don't add it
-                element_left = self.board[start[0] + n][start[1] - 1].isalpha()
-                if start[1] == 10:
-                    element_right = "0"
-                else:
-                    element_right = self.board[start[0] + n][start[1] + 1].isalpha()
-                if not element_left or not element_right:
-                    taken_pairs.append([start[0] + n, start[1]])
-        return taken_pairs
-
 
 board_manager = BoardManager()
 word_manager = WordManager()
 
-@app.route('/word', methods=['GET'])
-def send_word():    
-    word = word_manager.select_first_word()
-    tiles = word_manager.tile_manager.player_tiles(7)
-    position, orientation = word_manager.initial_position(word)
-    
-    board_manager.clear_board()
-    board_manager.add_first_word(word, position, orientation)
-    board_manager.display()
 
-    print(word, tiles, position, orientation)
+# if not then remove word and coordinates from dictionary
+# do all the valid words intercept?
+# every valid word must share a square with another valid word
 
-    return jsonify({"word": word, "tiles": tiles, "position": position, "orientation": orientation})
+# add logic that invalidates word if it doesnt meet criteria 
 
-@app.route('/tile-position', methods=['POST'])
-def update_tile_position():
-    data = request.get_json()
-    print(f"Received tile position: {data}")
+# collect valid words and its initial and final coordinates
+# are the words intersecting?
+    # if no 
+        # invalid_submission()
+            # return the tiles to the players rack
+# are the words adequately spaced?
+    # if yes
+        # clear the rest of the board that doesnt contain the words.
+        # add tiles to rack until player has 7 total
+    # if no
+        # invalid_submision()
 
-    # Data Assignment
-    tileID = data['tileID']
-    letter = data['tileID'][0]
-    position = data['position'].replace('grid','')
-    row, col = map(int, position.split('_'))
+# def invalid_submission()
+    # add tiles back to player rack
+    # 
 
-    board_manager.add_letter(row, col, tileID)
-    board_manager.display()
+# if no letter is within one square of existing words, invalid submission
 
-    print(letter, row, col)
-    return '', 200
-
-@app.route('/submit', methods=['POST'])
-def submit():
-    print(f"Received submit request")
-    ## Define existing words
-    taken_spaces = []
-    valid_words = {}
-    
-    def check_and_add_word(i, j, direction):
-        word, taken = word_manager.check_word(i, j, direction)
-        if word != "":
-            taken_spaces.extend(taken)
-            valid_words[word] = taken
-
-    # Loop through the grid, recognizing any valid word
-    for i in range(11):
-        for j in range(11):
-            if [i, j] not in taken_spaces: 
-                grid_element = board_manager.board[i][j][0]
-                if grid_element.isalpha():
-                    # Right-most edge case
-                    if i == 10:
-                        check_and_add_word(i, j, "right")
-                    if j == 10:
-                        check_and_add_word(i, j, "under")
-                    if i < 10 and j < 10:
-                        element_contains_letter = word_manager.check_under(i, j)[0].isalpha()
-                        if element_contains_letter:
-                            check_and_add_word(i, j, "under")
-                        element_contains_letter = word_manager.check_right(i, j)[0].isalpha()
-                        if element_contains_letter:
-                            check_and_add_word(i, j, "right")
-
-    print(valid_words)
-
-    board_manager.intercept_checker(valid_words) # checks if words have an intercepting square, if not, gets removed
-
-    # if not then remove word and coordinates from dictionary
-    # do all the valid words intercept?
-    # every valid word must share a square with another valid word
-
-    # add logic that invalidates word if it doesnt meet criteria 
-
-    # collect valid words and its initial and final coordinates
-    # are the words intersecting?
-        # if no 
-            # invalid_submission()
-                # return the tiles to the players rack
-    # are the words adequately spaced?
-        # if yes
-            # clear the rest of the board that doesnt contain the words.
-            # add tiles to rack until player has 7 total
-        # if no
-            # invalid_submision()
-    
-    # def invalid_submission()
-        # add tiles back to player rack
-        # 
-
-    # if no letter is within one square of existing words, invalid submission
-
-    # word needs to:
-        # be attached to an existing word
-        # Instance where you create a word parallel and next to another
-            # Every letter needs to be checked horizontally & vertically
-    return '', 200
+# word needs to:
+    # be attached to an existing word
+    # Instance where you create a word parallel and next to another
+        # Every letter needs to be checked horizontally & vertically
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
