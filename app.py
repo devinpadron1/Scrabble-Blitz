@@ -89,13 +89,12 @@ def submit():
     
     def check_and_add_word(row, col, direction): # Returns word and spaces it takes up
         word, taken_hor, taken_ver = word_manager.check_word(row, col, direction) 
-        if word: # True if `word` is not an empty string
-            if direction == "right":
-                taken_spaces_horizontal.extend(taken_hor)
-                valid_words[word] = taken_hor
-            else: 
-                taken_spaces_vertical.extend(taken_ver)
-                valid_words[word] = taken_ver
+        if direction == "right":
+            taken_spaces_horizontal.extend(taken_hor)
+            valid_words[word] = taken_hor
+        else: 
+            taken_spaces_vertical.extend(taken_ver)
+            valid_words[word] = taken_ver
 
     # Check if a word can be formed in a direction
     def check_word_direction(row, col, direction):
@@ -108,7 +107,7 @@ def submit():
     for i in range(11):
         for j in range(11):
             grid_element = board_manager.board[i][j][0]
-            position = [i, j]
+            position = (i, j)
             # Skip the grid element if it is taken in both directions
             if position in taken_spaces_vertical and position in taken_spaces_horizontal:
                 continue
@@ -231,18 +230,17 @@ class WordManager:
                     counter += 1
             else:
                 element_contains_letter = False
-        if potential_word in words:
-            start_coord = [row, col]
-            end_coord = [row + counter - 1, col] if direction == "under" else [row, col + counter - 1]
-            print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-            if direction == "under":
-                taken_vertical = self.generate_coordinates(start_coord, end_coord)
-            else:
-                taken_horizontal = self.generate_coordinates(start_coord, end_coord)
-            return potential_word, taken_horizontal, taken_vertical
+        start_coord = [row, col]
+        end_coord = [row + counter - 1, col] if direction == "under" else [row, col + counter - 1]
+        if direction == "under":
+            taken_vertical = self.generate_coordinates(start_coord, end_coord)
         else:
-            potential_word, start_coord, end_coord, taken_vertical, taken_horizontal = self.variable_reset()
-            return potential_word, taken_horizontal, taken_vertical
+            taken_horizontal = self.generate_coordinates(start_coord, end_coord)
+        if potential_word in words:
+            print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
+        else:
+            print(potential_word, "is NOT a valid word in cells", start_coord, "through", end_coord)
+        return potential_word, taken_horizontal, taken_vertical
     
     # Returns array of coordinates between two points
     def generate_coordinates(self, start, end): 
@@ -250,11 +248,6 @@ class WordManager:
             return [(x, start[1]) for x in range(start[0], end[0] + 1)]
         elif start[0] == end[0]: # Horizontal word (constant x)
             return [(start[0], y) for y in range(start[1], end[1] + 1)]
-
-    def variable_reset(self):
-        word = ""
-        arrays = [list() for _ in range(4)] # creates 4 empty array lists
-        return word, *arrays # *arrays unpacks them
 
     def intercept_check(self, words): # Do the words contain a square that intercepts another?
         words_to_remove = set()
@@ -341,3 +334,5 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 # TODO: Add points functionality. Bonus squares, etc.
+# TODO: If tile from an existing word isn't used then its invalid.
+# TODO: Add timer functionality
