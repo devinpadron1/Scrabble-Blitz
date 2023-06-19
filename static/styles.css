@@ -46,6 +46,10 @@ body {
     position: relative;
 }
 
+.in-game-buttons {
+    display: flex;
+}
+
 span {
     background-color: transparent;
 }
@@ -126,7 +130,7 @@ span {
 }
 
 #timer {
-    align-self: flex-end;
+    align-self: center; /* TODO: Timer currently still aligned to the right. Center it.  */
     margin-right: 20px;
 }
 
