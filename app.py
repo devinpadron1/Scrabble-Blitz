@@ -85,23 +85,23 @@ def submit():
     ## Define existing words
     taken_spaces_horizontal = [] # Spaces wont be checked in horizontal direction
     taken_spaces_vertical = []  # Same as ^ in vertical direction
-    valid_words = {}
+    words_on_board = {}
     
-    def check_and_add_word(row, col, direction): # Returns word and spaces it takes up
+    def add_word(row, col, direction): # Returns word and spaces it takes up
         word, taken_hor, taken_ver = word_manager.check_word(row, col, direction) 
         if direction == "right":
             taken_spaces_horizontal.extend(taken_hor)
-            valid_words[word] = taken_hor
+            words_on_board[word] = taken_hor
         else: 
             taken_spaces_vertical.extend(taken_ver)
-            valid_words[word] = taken_ver
+            words_on_board[word] = taken_ver
 
     # Check if a word can be formed in a direction
-    def check_word_direction(row, col, direction):
+    def check_for_word_and_add(row, col, direction):
         if word_manager.check_under(row, col)[0].isalpha() and direction == 'under':
-            check_and_add_word(row, col, "under")
+            add_word(row, col, "under")
         elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
-            check_and_add_word(row, col, "right")
+            add_word(row, col, "right")
 
     # Loop through the grid, recognizing any valid word
     for i in range(11):
@@ -116,29 +116,22 @@ def submit():
                 if position not in taken_spaces_vertical and position not in taken_spaces_horizontal:
                     # Edge cases
                     if i == 10:
-                        check_and_add_word(i, j, 'right')
+                        check_for_word_and_add(i, j, 'right')
                     elif j == 10:
-                        check_and_add_word(i, j, 'under')
+                        check_for_word_and_add(i, j, 'under')
                     else:
-                        check_word_direction(i, j, 'under')
-                        check_word_direction(i, j, 'right')
+                        check_for_word_and_add(i, j, 'under')
+                        check_for_word_and_add(i, j, 'right')
 
                 elif position in taken_spaces_vertical:
-                    # Edge case
-                    if i == 10:
-                        check_and_add_word(i, j, 'right')
-                    else: 
-                        check_word_direction(i, j, 'right')
+                    check_for_word_and_add(i, j, 'right')
 
                 elif position in taken_spaces_horizontal:
-                    # Edge case
-                    if j == 10:
-                        check_and_add_word(i, j, 'under')
-                    else:
-                        check_word_direction(i, j, 'under')
+                    check_for_word_and_add(i, j, 'under')
 
-    print(valid_words)
-    word_manager.intercept_check(valid_words) # checks if words have an intercepting square, if not, gets removed
+    board_manager.display()
+    print(words_on_board)
+    word_manager.intercept_check(words_on_board) # checks if words have an intercepting square, if not, gets removed
 
     return '', 200
 
@@ -306,17 +299,22 @@ word_manager = WordManager()
 
 # add logic that invalidates word if it doesnt meet criteria 
 
-# collect valid words and its initial and final coordinates
-# are the words intersecting?
-    # if no 
-        # invalid_submission()
-            # return the tiles to the players rack
-# are the words adequately spaced?
-    # if yes
-        # clear the rest of the board that doesnt contain the words.
-        # add tiles to rack until player has 7 total
-    # if no
-        # invalid_submision()
+# collect all words and its initial and final coordinates
+# if all words are valid (in dictionary)
+    # are the words intersecting?
+        # if no 
+            # invalid_submission()
+                # return the tiles to the players rack
+    # are the words adequately spaced?
+        # if yes
+            # clear the rest of the board that doesnt contain the words.
+            # add tiles to rack until player has 7 total
+        # if no
+            # invalid_submision()
+# else
+#   print a message telling the user what the invalid word was
+#   clear board except for existing words
+#   reset tiles back to player's hand
 
 # def invalid_submission()
     # add tiles back to player rack
@@ -336,3 +334,15 @@ if __name__ == '__main__':
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.
 # TODO: Add timer functionality
+# TODO: Increase size of tiles to take up entire square, prevent stacking
+# TODO: Add existing word and its tiles
+#           I need a way to differentiate between the existing word(s) on the
+#           board and the new tiles im adding. Perhaps a seperate dictionary
+#           would do the trick
+
+## If having issues with port
+# lsof -i :5000
+# kill -9 {number}
+
+## To run application
+# FLASK_APP=app.py flask run
