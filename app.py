@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # Open scrabble list of words
 with open("scrabble-words.txt", "r") as file:
-    words = file.read().split()
+    words_list = file.read().split()
 
 DEFAULT_TILES = {
     'A': {'points': 1, 'amount': 9},
@@ -131,6 +131,32 @@ def submit():
 
     board_manager.display()
     print(words_on_board)
+
+    # TODO: Add code that verifies if all words in the dictionary are valid
+    all_words_valid = True
+    for word in words_on_board:
+        if word not in words_list:
+            print(word, "is not a valid word")
+            all_words_valid = False
+            response = {
+                'message': f'{word} is not a valid word. Try again.'
+            }
+            return jsonify(response), 400 # 400 typically communicates client error
+            # TODO: Reset tiles: In order to reset tiles I need to distinguish player tiles with in board tiles. 
+    
+    if all_words_valid:
+        # Check if words intersecting
+            # if no 
+                # invalid_submission()
+        return '', 200
+    # else
+        # print a message telling the user what the invalid word was
+        # invalid_submission()
+
+    # def invalid_submission()
+        # clear board except for existing valid words
+        # reset tiles back to player's rack
+            
     word_manager.intercept_check(words_on_board) # checks if words have an intercepting square, if not, gets removed
 
     return '', 200
@@ -153,7 +179,7 @@ class TileManager:
 
 class WordManager:
     def __init__(self):
-        self.filtered_words = [word for word in words if len(word) <= 7]
+        self.filtered_words = [word for word in words_list if len(word) <= 7]
         self.tile_manager = TileManager()
     
     def get_first_word(self):                
@@ -229,10 +255,6 @@ class WordManager:
             taken_vertical = self.generate_coordinates(start_coord, end_coord)
         else:
             taken_horizontal = self.generate_coordinates(start_coord, end_coord)
-        if potential_word in words:
-            print(potential_word, "is a valid word in cells", start_coord, "through", end_coord)
-        else:
-            print(potential_word, "is NOT a valid word in cells", start_coord, "through", end_coord)
         return potential_word, taken_horizontal, taken_vertical
     
     # Returns array of coordinates between two points
@@ -288,44 +310,8 @@ class BoardManager:
         for row in self.board:
             print(' '.join(cell[0] for cell in row))
 
-
 board_manager = BoardManager()
 word_manager = WordManager()
-
-
-# if not then remove word and coordinates from dictionary
-# do all the valid words intercept?
-# every valid word must share a square with another valid word
-
-# add logic that invalidates word if it doesnt meet criteria 
-
-# collect all words and its initial and final coordinates
-# if all words are valid (in dictionary)
-    # are the words intersecting?
-        # if no 
-            # invalid_submission()
-                # return the tiles to the players rack
-    # are the words adequately spaced?
-        # if yes
-            # clear the rest of the board that doesnt contain the words.
-            # add tiles to rack until player has 7 total
-        # if no
-            # invalid_submision()
-# else
-#   print a message telling the user what the invalid word was
-#   clear board except for existing words
-#   reset tiles back to player's hand
-
-# def invalid_submission()
-    # add tiles back to player rack
-    # 
-
-# if no letter is within one square of existing words, invalid submission
-
-# word needs to:
-    # be attached to an existing word
-    # Instance where you create a word parallel and next to another
-        # Every letter needs to be checked horizontally & vertically
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
@@ -334,15 +320,9 @@ if __name__ == '__main__':
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.
 # TODO: Add timer functionality
-# TODO: Increase size of tiles to take up entire square, prevent stacking
 # TODO: Add existing word and its tiles
-#           I need a way to differentiate between the existing word(s) on the
-#           board and the new tiles im adding. Perhaps a seperate dictionary
-#           would do the trick
+            # I need a way to differentiate between the existing word(s) on the
+            # board and the new tiles im adding. Perhaps a seperate dictionary
+            # would do the trick
 
-## If having issues with port
-# lsof -i :5000
-# kill -9 {number}
-
-## To run application
-# FLASK_APP=app.py flask run
+# DID: Communicate invalid word to player.

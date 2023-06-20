@@ -21,7 +21,7 @@ Game Screen
 First version of app will be just one single word in the center
 
 Extra credit
-    As the rounds pass, I want an animation to being in letters
+    As the rounds pass, I want an animation to bring in letters
 
 __________________________________________________________
 
@@ -32,6 +32,23 @@ Example 1       Example 2       Example 3
                  __A            _E_ Case is initially loaded
                  __Y            _T_ When T is added, case not counted. 
                                     Set is counted
+
+Solutions
+Example 1: Prohibit letters A and T to be analyzed vertically
+Example 2: Add potential word, 'stay' but if any of its letters 
+           is part of an invalid word, then it gets removed
+
+           What if a player adds two valid words that have an
+           invalid letter?
+                Don't count either of the two words. Capture
+                invalid word into variable in order to communicate to player
+           
+           Should I make player add one word at a time?
+                No, too restrictive. Give the player the freedom to make multiple 
+                words      
+
+Example 3: If word is invalid, do not check any of its letters
+           in any direction
 
 run_loop = True
 while run_loop
@@ -59,3 +76,12 @@ while run_loop
 
     TODO: Example 2
 
+
+Command Line __________________________________________________________
+
+If having issues with port:
+lsof -i :5000
+kill -9 {number}
+
+To run application:
+FLASK_APP=app.py flask run

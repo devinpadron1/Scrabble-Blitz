@@ -232,15 +232,23 @@ document.addEventListener("DOMContentLoaded", function(event) {
         fetch('http://127.0.0.1:5000/submit', {
             method: 'POST'
         })
-        .then(response => response.json())
+        .then(response => {
+            // if response is not ok, parse it as JSON and return it
+            // otherwise, return a resolved promise without a value
+            return !response.ok ? response.json() : Promise.resolve();
+        })
         .then(data => {
-            console.log('Success:', data);
+            if (data) {
+                document.querySelector('#message span').innerText = data.message;
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
         });
-    })
+    });
     
+
+
     function startGame() {
         // Start the game: 
         // 1. Start the timer.
@@ -248,8 +256,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 })
 
-// TODO: Show letter points in tile
-// TODO: Submit information to Python everytime the grid is updated
+
 // TODO: Add ability to return tile into stack.
+// TODO: Add ability to move tile within the stack.
 // TODO: Don't allow for tiles to stack on top of each other
-// TODO: Fix issue with bonus square where tile doesnt align
