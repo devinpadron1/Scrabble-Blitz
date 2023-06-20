@@ -233,21 +233,29 @@ document.addEventListener("DOMContentLoaded", function(event) {
             method: 'POST'
         })
         .then(response => {
-            // if response is not ok, parse it as JSON and return it
-            // otherwise, return a resolved promise without a value
-            return !response.ok ? response.json() : Promise.resolve();
+            return response.json()
         })
         .then(data => {
-            if (data) {
+            if (data.message) {
                 document.querySelector('#message span').innerText = data.message;
+            }
+            if (data.tiles_to_remove) {
+                for (let pos of data.tiles_to_remove) {
+                    let [row, col] = pos;
+                    console.log(`row: ${row}, col: ${col}, gridID: grid${row + 1}_${col + 1}`);
+                    let tileElement = document.getElementById(`grid${row + 1}_${col + 1}`).querySelector(".tile");
+                    console.log(tileElement);                    
+                    // Remove tile from board
+                    tileElement.remove();
+                    // Append tile to player's hand
+                    document.getElementById(`tray`).appendChild(tileElement);
+                }
             }
         })
         .catch((error) => {
             console.error('Error:', error);
         });
     });
-    
-
 
     function startGame() {
         // Start the game: 

@@ -51,8 +51,9 @@ def home():
 @app.route('/word', methods=['GET'])
 def load_initial_state():    
     word = word_manager.get_first_word()
-    tiles = word_manager.tile_manager.get_player_tiles(7)
     position, orientation = word_manager.initial_position(word)
+
+    tiles = word_manager.tile_manager.get_player_tiles(7)
     
     board_manager.clear_board()
     board_manager.add_first_word(word, position, orientation) # Adds it to the Python grid
@@ -139,9 +140,18 @@ def submit():
             print(word, "is not a valid word")
             all_words_valid = False
             response = {
-                'message': f'{word} is not a valid word. Try again.'
+                'message': f'{word} is not a valid word. Try again.',
+                'tiles_to_remove': board_manager.player_moves
             }
-            return jsonify(response), 400 # 400 typically communicates client error
+            board_manager.reset_player_moves()
+            for tile in board_manager.player_moves: # remove tile in server side
+                row = tile[0]
+                col = tile[1]
+                board_manager.board[row][col] = '_'
+            
+            print(board_manager.display())
+
+            return jsonify(response), 400 # 400 communicates client error
             # TODO: Reset tiles: In order to reset tiles I need to distinguish player tiles with in board tiles. 
     
     if all_words_valid:
@@ -285,9 +295,11 @@ class WordManager:
 class BoardManager:
     def __init__(self, size=11): # Generate board
         self.board = [['_' for _ in range(size)] for _ in range(size)]
+        self.player_moves = []
 
     def clear_board(self, size=11):
         self.board = [['_' for _ in range(size)] for _ in range(size)]
+        self.player_moves = []
 
     def add_first_word(self, word, position, orientation):
         row, col = 5, 5 # Middle of board
@@ -305,6 +317,13 @@ class BoardManager:
                 if self.board[i][j] == tileID:
                     self.board[i][j] = '_'
         self.board[row-1][col-1] = tileID
+        self.player_moves.append((row-1, col-1, tileID[0]))
+    
+    def reset_player_moves(self):
+        for move in self.player_moves:
+            row, col, tileID = move
+            self.board[row][col] = '_'
+        self.player_moves = []
 
     def display(self):
         for row in self.board:
@@ -324,5 +343,3 @@ if __name__ == '__main__':
             # I need a way to differentiate between the existing word(s) on the
             # board and the new tiles im adding. Perhaps a seperate dictionary
             # would do the trick
-
-# DID: Communicate invalid word to player.

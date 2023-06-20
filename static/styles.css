@@ -139,3 +139,7 @@ span {
 #submit {
     background-color: lightgreen;
 }
+
+#message {
+    height: 20px;
+}
