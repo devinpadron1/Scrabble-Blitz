@@ -339,7 +339,3 @@ if __name__ == '__main__':
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.
 # TODO: Add timer functionality
-# TODO: Add existing word and its tiles
-            # I need a way to differentiate between the existing word(s) on the
-            # board and the new tiles im adding. Perhaps a seperate dictionary
-            # would do the trick

@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 for (let pos of data.tiles_to_remove) {
                     let [row, col] = pos;
                     console.log(`row: ${row}, col: ${col}, gridID: grid${row + 1}_${col + 1}`);
-                    let tileElement = document.getElementById(`grid${row + 1}_${col + 1}`).querySelector(".tile");
+                    let tileElement = document.getElementById(`grid${row + 1}_${col + 1}`).querySelector(".tile-tray");
                     console.log(tileElement);                    
                     // Remove tile from board
                     tileElement.remove();
