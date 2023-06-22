@@ -238,6 +238,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         .then(data => {
             if (data.message) {
                 document.querySelector('#message span').innerText = data.message;
+                document.querySelector('#message span').style.color = 'red';
             }
             if (data.tiles_to_remove) {
                 for (let pos of data.tiles_to_remove) {
@@ -252,8 +253,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
             }
             // Changes to be made after valid move
-            console.log(data.status)
             if (data.status == 200) {
+                document.querySelector('#message span').innerText = data.message;
+                document.querySelector('#message span').style.color = 'green';
+
                 // Change class of tiles on the board from 'tile-tray' to 'tile-ingame'
                 let boardContainer = document.getElementById('board-square-container');
                 let gameBoardTiles = boardContainer.querySelectorAll('.board-square .tile-tray');                

@@ -143,7 +143,7 @@ def submit():
                 'message': f'{word} is not a valid word. Try again.',
                 'tiles_to_remove': board_manager.player_moves
             }
-            board_manager.reset_player_moves()
+            board_manager.erase_player_moves()
             for tile in board_manager.player_moves: # remove tile in server side
                 row = tile[0]
                 col = tile[1]
@@ -151,19 +151,36 @@ def submit():
             print(board_manager.display())
             return jsonify(response), 400 # 400 communicates client error
     
-    all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
+    if not bool(board_manager.player_moves): # if player moves is empty
+        all_words_intercept = True
+    else:
+        all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
 
-    if all_words_valid and all_words_intercept:
+    if all_words_valid and all_words_intercept and bool(board_manager.player_moves):
         tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
+        
+        # Adds word player created based on his/her moves       
+        word = next((word for word, positions in words_on_board.items() 
+             if all(position in positions for position in tiles_used_positions)), None)
         
         # TODO: Send new tiles to player
         print('Tile used positions = ', tiles_used_positions)
-
-        board_manager.reset_player_moves()
-        return {'tiles_used_positions': tiles_used_positions, 'status': 200}, 200
+        board_manager.player_moves = [] # Reset player moves
+        response = {
+            'message': f'{word} is a valid word. Create a new word.',
+            'status': 200
+        }
+        return jsonify(response)
+    elif all_words_valid and all_words_intercept and not bool(board_manager.player_moves): # not bool checks if player moves is empty
+        response = {
+            'message': 'Place tiles to create a word.'
+        }
+        return jsonify(response)
     else: 
-        # TODO: print a message telling the user that the words dont intercept
-        return '', 400
+        response = {
+            'message': 'Word created does not intercept with existing word. Try again'
+        }
+        return jsonify(response)
 
     
 class TileManager:
@@ -321,7 +338,7 @@ class BoardManager:
         self.board[row-1][col-1] = tileID
         self.player_moves.append((row-1, col-1, tileID[0]))
     
-    def reset_player_moves(self):
+    def erase_player_moves(self):
         for move in self.player_moves:
             row, col, tileID = move
             self.board[row][col] = '_'
@@ -338,7 +355,7 @@ word_manager = WordManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# TODO: Have tiles remain permenantely on the board and on the serverside when a new word is created.
+# TODO: Have tiles remain permenantely on the serverside when a new word is created.
 # TODO: Add new tiles to hand after ^.
 
 # TODO: Add points functionality. Bonus squares, etc.
