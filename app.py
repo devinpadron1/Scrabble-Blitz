@@ -148,29 +148,24 @@ def submit():
                 row = tile[0]
                 col = tile[1]
                 board_manager.board[row][col] = '_'
-            
             print(board_manager.display())
-
             return jsonify(response), 400 # 400 communicates client error
-            # TODO: Reset tiles: In order to reset tiles I need to distinguish player tiles with in board tiles. 
     
-    if all_words_valid:
-        # Check if words intersecting
-            # if no 
-                # invalid_submission()
-        return '', 200
-    # else
-        # print a message telling the user what the invalid word was
-        # invalid_submission()
+    all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
 
-    # def invalid_submission()
-        # clear board except for existing valid words
-        # reset tiles back to player's rack
-            
-    word_manager.intercept_check(words_on_board) # checks if words have an intercepting square, if not, gets removed
+    if all_words_valid and all_words_intercept:
+        tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
+        
+        # TODO: Send new tiles to player
+        print('Tile used positions = ', tiles_used_positions)
 
-    return '', 200
+        board_manager.reset_player_moves()
+        return {'tiles_used_positions': tiles_used_positions}, 200
+    else: 
+        # TODO: print a message telling the user that the words dont intercept
+        return '', 400
 
+    
 class TileManager:
     def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
@@ -274,23 +269,30 @@ class WordManager:
         elif start[0] == end[0]: # Horizontal word (constant x)
             return [(start[0], y) for y in range(start[1], end[1] + 1)]
 
-    def intercept_check(self, words): # Do the words contain a square that intercepts another?
-        words_to_remove = set()
-        for word1, coords1 in words.items():
-            # flag to indicate if the word has any shared coordinate
-            has_shared_coordinate = False
-            for word2, coords2 in words.items():
-                if word1 != word2:  # avoid self comparison
-                    # check for shared coordinates
-                    if any(coord in coords2 for coord in coords1):
-                        has_shared_coordinate = True
-                        break  # no need to check further
-            # if the word has no shared coordinate, add it to removal set
-            if not has_shared_coordinate:
-                words_to_remove.add(word1)
-        # remove words that have no shared coordinate
-        for word in words_to_remove:
-            del words[word]
+    def intercept_check(self, words_on_board, player_moves):
+        # Convert player_moves to a set for faster lookups
+        player_moves_set = {(x[0], x[1]) for x in player_moves} # removes letter
+        
+        # Initialize two empty sets to hold positions of the player's words and the existing words
+        player_words_positions = set()
+        existing_words_positions = set()
+
+        for word, positions in words_on_board.items():
+            # Convert positions to a set
+            positions_set = set(tuple(pos) for pos in positions)
+
+            # Check if any positions in the word are in the player's moves
+            if positions_set & player_moves_set:
+                player_words_positions.update(positions_set)
+            else:
+                existing_words_positions.update(positions_set)
+        
+        # If any position in the player's words intersects with the positions of the existing words, return True
+        if player_words_positions & existing_words_positions:
+            return True
+        # If no intersections were found, return False
+        return False
+
 
 class BoardManager:
     def __init__(self, size=11): # Generate board
