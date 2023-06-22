@@ -78,7 +78,7 @@ def update_tile_position():
     board_manager.display()
 
     print(letter, row, col)
-    return '', 200
+    return ''
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -160,7 +160,7 @@ def submit():
         print('Tile used positions = ', tiles_used_positions)
 
         board_manager.reset_player_moves()
-        return {'tiles_used_positions': tiles_used_positions}, 200
+        return {'tiles_used_positions': tiles_used_positions, 'status': 200}, 200
     else: 
         # TODO: print a message telling the user that the words dont intercept
         return '', 400
@@ -337,6 +337,9 @@ word_manager = WordManager()
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
+
+# TODO: Have tiles remain permenantely on the board and on the serverside when a new word is created.
+# TODO: Add new tiles to hand after ^.
 
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.

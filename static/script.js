@@ -252,13 +252,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
             }
             // Changes to be made after valid move
+            console.log(data.status)
             if (data.status == 200) {
                 // Change class of tiles on the board from 'tile-tray' to 'tile-ingame'
                 let boardContainer = document.getElementById('board-square-container');
-                let gameBoardTiles = boardContainer.querySelectorAll('.tile-tray');                
+                let gameBoardTiles = boardContainer.querySelectorAll('.board-square .tile-tray');                
                 gameBoardTiles.forEach(tile => {
-                    tile.classList.remove('tile-tray');
                     tile.classList.add('tile-ingame');
+                    tile.classList.remove('tile-tray');
+                    tile.removeAttribute('draggable');
                 });
                 // Load new tiles into player's hand
                 if (data.new_tiles) {
