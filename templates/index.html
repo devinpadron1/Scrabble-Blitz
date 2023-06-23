@@ -11,12 +11,26 @@
 </head>
 <body>
     <div id="instructions">
+        <img src="static/sb_logo.png" alt="">
+        <h1>Scrabble Blitz</h1>
         <p>Earn the most points before times runs out!</p>
         <button id="play-button">Play</a>
-        <button id="high-score-button">High Score</button>
     </div>
     <div id="game-screen" style="display: none;">
-        <div id="timer">2:00</div>
+        <div id="top-container">
+            <div class="top-sub-container hs">
+                <div>High-Score</div>
+                <div id="high-score">200</div>
+            </div>
+            <div class="top-sub-container pt">
+                <div>Points</div>
+                <div id="points">0</div>
+            </div>
+            <div class="top-sub-container tm">
+                <div>Time</div>
+                <div id="timer">2:00</div>
+            </div>
+        </div>
         <div id="board-square-container">
             <!-- board squares -->
         </div>

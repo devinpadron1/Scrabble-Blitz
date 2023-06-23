@@ -46,8 +46,15 @@ body {
     position: relative;
 }
 
-.in-game-buttons {
+#in-game-buttons {
     display: flex;
+    justify-content: space-between;
+    width: 300px;
+}
+#in-game-buttons button{
+    font-size: 20px;
+    border-radius: 5px;
+    border-width: 1px;
 }
 
 span {
@@ -83,14 +90,14 @@ span {
     background: linear-gradient(135deg, #b58863, #d9b48f); /* smooth wooden effect */
     box-shadow: 3px 3px 10px rgba(0,0,0,0.3); /* creates a soft shadow */
     border: 0.5px solid black;
-    border-radius: 22%; /* creates slightly rounded corners */
-    height: 39px;
-    width: 39px;
+    border-radius: 10%; /* creates slightly rounded corners */
+    height: 48px;
+    width: 48px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: #3d1b00; /* letter color */
-    font-size: 24px;
+    font-size: 30px;
     font-weight: bold;
     z-index: 2;
 
@@ -109,7 +116,7 @@ span {
     background-color: rgb(233, 213, 188);
     border: .5px solid black;
     padding: 10px;
-    width: 300px;
+    width: 360px;
     height: 40px;
     border-radius: 5px;
     margin: 10px auto;
@@ -129,9 +136,36 @@ span {
     background-color: rgb(230, 150, 2);
 }
 
-#timer {
-    align-self: center; /* TODO: Timer currently still aligned to the right. Center it.  */
-    margin-right: 20px;
+#top-container {
+    display: flex;
+    justify-content: space-between;
+    width: 500px;
+    margin-top: 10px;
+}
+
+.top-sub-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.top-sub-container.hs { 
+    align-self: flex-start;
+}
+.top-sub-container.pt { 
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.top-sub-container.tm { 
+    align-self: flex-end;
+}
+
+#high-score,
+#timer,
+#points {
+    font-size: 30px;
 }
 
 /* Buttons */
@@ -140,10 +174,19 @@ span {
     background-color: lightgreen;
 }
 
+#play-button {
+    font-size: 40px;
+}
+
 #message {
     height: 20px;
 }
 
 #message span {
     user-select: none;
+}
+
+img {
+    margin-top: 80px;
+    width: 300px;
 }

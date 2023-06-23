@@ -46,6 +46,10 @@ BONUS_SQUARES = {
 
 @app.route('/', methods=['GET'])
 def home():
+    global board_manager
+    global tile_manager
+    board_manager = BoardManager()
+    tile_manager = TileManager()
     return render_template('index.html')
 
 @app.route('/word', methods=['GET'])
@@ -83,6 +87,8 @@ def update_tile_position():
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
     print(f"Received shuffle request")
+    tile_manager.shuffle_tiles()
+    return jsonify({"tiles": tile_manager.tile_rack})
 
 @app.route('/discard', methods=['POST'])
 def discard():
@@ -173,7 +179,10 @@ def submit():
         # Adds word player created based on his/her moves       
         word = next((word for word, positions in words_on_board.items() 
              if all(position in positions for position in tiles_used_positions)), None)
-        tiles = tile_manager.get_player_tiles(len(tiles_used_positions))
+
+        unique_tiles_used = set([move[2] for move in board_manager.player_moves])
+
+        tiles = tile_manager.get_player_tiles(len(unique_tiles_used))
         board_manager.player_moves = [] # Reset player moves
         response = {
             'message': f'{word} is a valid word. Create a new word.',
@@ -209,6 +218,9 @@ class TileManager:
                 self.tile_rack.append(selected_tile)
                 self.current_tiles[selected_tile]['amount'] -= 1
         return self.tile_rack
+
+    def shuffle_tiles(self):
+        random.shuffle(self.tile_rack)
 
 class WordManager:
     def __init__(self):
@@ -367,8 +379,7 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 # TODO: ISSUES
-#           Not all tiles are recognized as "unique".
-#           There are instances where more than 7 tiles in players hand
+
 
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.

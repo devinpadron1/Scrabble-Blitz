@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if (!dropzone.classList.contains('board-square')) {
             dropzone = dropzone.parentNode;
         }
-        if (!dropzone.querySelector(".tile")) {  // check if dropzone is empty
+        if (!dropzone.querySelector(".tile-tray")) {  // check if dropzone is empty
             draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
             dropzone.appendChild(draggableElement); // Append it to the dropzone
             // Send tile position to Python
@@ -233,7 +233,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     document.getElementById('play-button').addEventListener('click', function() {
         document.getElementById('instructions').style.display = 'none';
-        document.getElementById('high-score-button').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
         startGame(); 
     });
@@ -287,11 +286,63 @@ document.addEventListener("DOMContentLoaded", function(event) {
         });
     });
 
+    // Shuffle button
+    document.getElementById('shuffle-button').addEventListener('click', function() {
+        fetch('http://127.0.0.1:5000/shuffle', {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove current tiles from the tray
+            let trayElement = document.getElementById('tray');
+            while (trayElement.firstChild) {
+                trayElement.removeChild(trayElement.firstChild);
+            }
+            // Load the new shuffled tiles
+            loadTiles(data.tiles);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    });
+
     function startGame() {
-        // Start the game: 
-        // 1. Start the timer.
-        // 2. Load the tray.
+        //// TIMER
+        // Set the initial time (in seconds)
+        let timeRemaining = 2 * 60;
+        // Get the timer element
+        let timerElement = document.getElementById("timer");
+    
+        // Update the timer display
+        function updateTimerDisplay() {
+            let minutes = Math.floor(timeRemaining / 60);
+            let seconds = timeRemaining % 60;
+    
+            // Pad the minutes and seconds with leading zeros if necessary
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+    
+            // Update the timer element
+            timerElement.innerText = `${minutes}:${seconds}`;
+        }
+    
+        // Call the update function immediately to display the initial time
+        updateTimerDisplay();
+    
+        // Set up the interval
+        let timerInterval = setInterval(function() {
+            // Decrease the time remaining
+            timeRemaining--;
+            // Update the timer display
+            updateTimerDisplay();
+            // If the time has run out, stop the interval
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+            }
+        }, 1000);
+
     }
+    
+
 })
 
 
