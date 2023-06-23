@@ -15,8 +15,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         console.error('Error:', error);
     });
 
-    let tileCount = 0;
-
     const letterValues = {
         'A': 1,
         'B': 3,
@@ -116,8 +114,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         valueDiv.textContent = letterValues[letter]; // Set the text content of the value div
         valueDiv.classList.add("value");
         tileDiv.appendChild(valueDiv); // Add the value div to the tile div
-
-        tileCount++;
     }
 
     function tileGenerator(letter, id) {
@@ -158,16 +154,30 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     }
 
+    let tileCounts = {};
+
     function loadTiles(tiles) {
         let tileLength = tiles.length;
-
+    
         for (let i=0; i < tileLength; i++) {
-            let tileDiv = tileGenerator(tiles[i], `${tiles[i]}${i}`);
+            let letter = tiles[i];
+            
+            // Increase the count for this letter
+            if (!tileCounts[letter]) {
+                tileCounts[letter] = 0;
+            }
+            tileCounts[letter] += 1;
+            
+            // Use the count to generate the unique ID
+            let tileID = `${letter}${tileCounts[letter]}`;
+            
+            let tileDiv = tileGenerator(letter, tileID);
             tileDiv.className = 'tile-tray';
             let container = document.getElementById(`tray`);
             container.appendChild(tileDiv);
         }
     }
+    
     
     // Load the board.
     for (let i = 1; i <= 11; i++) {
@@ -266,8 +276,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     tile.removeAttribute('draggable');
                 });
                 // Load new tiles into player's hand
-                if (data.new_tiles) {
-                    loadTiles(data.new_tiles);
+                if (data.tiles) {
+                    let playerTiles = data.tiles;
+                    loadTiles(playerTiles);
                 }
             }
         })

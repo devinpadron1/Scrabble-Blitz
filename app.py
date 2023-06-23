@@ -53,10 +53,10 @@ def load_initial_state():
     word = word_manager.get_first_word()
     position, orientation = word_manager.initial_position(word)
 
-    tiles = word_manager.tile_manager.get_player_tiles(7)
+    tiles = tile_manager.get_player_tiles(7)
     
     board_manager.clear_board()
-    board_manager.add_first_word(word, position, orientation) # Adds it to the Python grid
+    board_manager.add_first_word(word, position, orientation) # Adds it to server-side grid
     board_manager.display()
 
     print(word, tiles, position, orientation)
@@ -79,6 +79,14 @@ def update_tile_position():
 
     print(letter, row, col)
     return ''
+
+@app.route('/shuffle', methods=['POST'])
+def shuffle():
+    print(f"Received shuffle request")
+
+@app.route('/discard', methods=['POST'])
+def discard():
+    print(f"Received discard request")
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -103,6 +111,9 @@ def submit():
             add_word(row, col, "under")
         elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
             add_word(row, col, "right")
+
+    player_hand = tile_manager.tile_rack
+    print(player_hand)
 
     # Loop through the grid, recognizing any valid word
     for i in range(11):
@@ -131,9 +142,9 @@ def submit():
                     check_for_word_and_add(i, j, 'under')
 
     board_manager.display()
-    print(words_on_board)
+    print(tile_manager.tile_rack)
 
-    # TODO: Add code that verifies if all words in the dictionary are valid
+    # Verifies if all words in the dictionary are valid
     all_words_valid = True
     for word in words_on_board:
         if word not in words_list:
@@ -162,12 +173,11 @@ def submit():
         # Adds word player created based on his/her moves       
         word = next((word for word, positions in words_on_board.items() 
              if all(position in positions for position in tiles_used_positions)), None)
-        
-        # TODO: Send new tiles to player
-        print('Tile used positions = ', tiles_used_positions)
+        tiles = tile_manager.get_player_tiles(len(tiles_used_positions))
         board_manager.player_moves = [] # Reset player moves
         response = {
             'message': f'{word} is a valid word. Create a new word.',
+            'tiles': tiles,
             'status': 200
         }
         return jsonify(response)
@@ -186,23 +196,23 @@ def submit():
 class TileManager:
     def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
+        self.tile_rack = []
 
     def get_player_tiles(self, num_tiles): # Generates player-held tiles
-        tile_rack = []
+        self.tile_rack = []
         # Add random, available tiles to tile_rack
         for _ in range(num_tiles):
             # List of available letter tiles
             tile_letters = [letter for letter, data in self.current_tiles.items() if data['amount'] > 0]
             if tile_letters:
                 selected_tile = random.choice(tile_letters)
-                tile_rack.append(selected_tile)
+                self.tile_rack.append(selected_tile)
                 self.current_tiles[selected_tile]['amount'] -= 1
-        return tile_rack
+        return self.tile_rack
 
 class WordManager:
     def __init__(self):
         self.filtered_words = [word for word in words_list if len(word) <= 7]
-        self.tile_manager = TileManager()
     
     def get_first_word(self):                
         word_not_in_board = True
@@ -217,12 +227,12 @@ class WordManager:
 
             # Verifies if there are enough tiles to create the word
             for letter in word_letters:
-                if self.tile_manager.current_tiles[letter]['amount'] > 0:
-                    self.tile_manager.current_tiles[letter]['amount'] -= 1
+                if tile_manager.current_tiles[letter]['amount'] > 0:
+                    tile_manager.current_tiles[letter]['amount'] -= 1
                     counter += 1
                 else: # if not enough tiles
                     for letter in word_letters[:counter]: # add previous letter tiles back
-                        self.tile_manager.current_tiles[letter]['amount'] += 1
+                        tile_manager.current_tiles[letter]['amount'] += 1
                     enough_tiles = False
                     break # break inner loop if not enough tiles
             if enough_tiles:
@@ -350,13 +360,15 @@ class BoardManager:
 
 board_manager = BoardManager()
 word_manager = WordManager()
+tile_manager = TileManager()
 
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
 
-# TODO: Have tiles remain permenantely on the serverside when a new word is created.
-# TODO: Add new tiles to hand after ^.
+# TODO: ISSUES
+#           Not all tiles are recognized as "unique".
+#           There are instances where more than 7 tiles in players hand
 
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: If tile from an existing word isn't used then its invalid.
