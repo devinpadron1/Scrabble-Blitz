@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request
-import random
+import random, copy
 
 app = Flask(__name__)
 
@@ -63,7 +63,7 @@ def load_initial_state():
     board_manager.add_first_word(word, position, orientation) # Adds it to server-side grid
     board_manager.display()
 
-    print(word, tiles, position, orientation)
+    print(tiles)
 
     return jsonify({"word": word, "tiles": tiles, "position": position, "orientation": orientation})
 
@@ -74,21 +74,24 @@ def update_tile_position():
 
     # Data Assignment
     tileID = data['tileID']
-    letter = data['tileID'][0]
     position = data['position'].replace('grid','')
     row, col = map(int, position.split('_'))
 
     board_manager.add_letter(row, col, tileID)
-    board_manager.display()
 
-    print(letter, row, col)
+    if tileID in tile_manager.player_rack:
+        tile_manager.player_rack.remove(tileID)
+
+    board_manager.display()
+    print(tile_manager.player_rack)
+
     return ''
 
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
     print(f"Received shuffle request")
     tile_manager.shuffle_tiles()
-    return jsonify({"tiles": tile_manager.tile_rack})
+    return jsonify({"tiles": tile_manager.player_rack})
 
 @app.route('/discard', methods=['POST'])
 def discard():
@@ -118,9 +121,6 @@ def submit():
         elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
             add_word(row, col, "right")
 
-    player_hand = tile_manager.tile_rack
-    print(player_hand)
-
     # Loop through the grid, recognizing any valid word
     for i in range(11):
         for j in range(11):
@@ -148,9 +148,9 @@ def submit():
                     check_for_word_and_add(i, j, 'under')
 
     board_manager.display()
-    print(tile_manager.tile_rack)
+    print(tile_manager.player_rack)
 
-    # Verifies if all words in the dictionary are valid
+    # Verifies if all words on the board are valid
     all_words_valid = True
     for word in words_on_board:
         if word not in words_list:
@@ -161,10 +161,6 @@ def submit():
                 'tiles_to_remove': board_manager.player_moves
             }
             board_manager.erase_player_moves()
-            for tile in board_manager.player_moves: # remove tile in server side
-                row = tile[0]
-                col = tile[1]
-                board_manager.board[row][col] = '_'
             print(board_manager.display())
             return jsonify(response), 400 # 400 communicates client error
     
@@ -172,21 +168,29 @@ def submit():
         all_words_intercept = True
     else:
         all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
+    
+    all_words_intercept = all( # check all pos of tiles in player_moves are present in some key of words_on_board
+        any(move in positions for positions in words_on_board.values())
+        for move in [(move[0], move[1]) for move in board_manager.player_moves]
+    )
 
     if all_words_valid and all_words_intercept and bool(board_manager.player_moves):
         tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
         
-        # Adds word player created based on his/her moves       
+        # word player created based on moves       
         word = next((word for word, positions in words_on_board.items() 
-             if all(position in positions for position in tiles_used_positions)), None)
+                    if tiles_used_positions[0] in positions), None)
 
         unique_tiles_used = set([move[2] for move in board_manager.player_moves])
+        old_player_rack = copy.deepcopy(tile_manager.player_rack)
+        new_player_rack = tile_manager.get_player_tiles(len(unique_tiles_used))
+        
+        new_player_tiles = [tile for tile in new_player_rack if tile not in old_player_rack]
 
-        tiles = tile_manager.get_player_tiles(len(unique_tiles_used))
         board_manager.player_moves = [] # Reset player moves
         response = {
             'message': f'{word} is a valid word. Create a new word.',
-            'tiles': tiles,
+            'tiles': new_player_tiles,
             'status': 200
         }
         return jsonify(response)
@@ -197,30 +201,34 @@ def submit():
         return jsonify(response)
     else: 
         response = {
-            'message': 'Word created does not intercept with existing word. Try again'
+            'message': 'Tile does not intercept with existing word. Try again',
+            'tiles_to_remove': board_manager.player_moves
         }
-        return jsonify(response)
+        board_manager.erase_player_moves()
+        print(board_manager.display())
+        return jsonify(response), 400 # 400 communicates client error
 
     
 class TileManager:
     def __init__(self): # Currently used tiles
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
-        self.tile_rack = []
+        self.player_rack = []
+        self.tile_id_counter = 0
 
     def get_player_tiles(self, num_tiles): # Generates player-held tiles
-        self.tile_rack = []
-        # Add random, available tiles to tile_rack
+        # Add random, available tiles to player_rack
         for _ in range(num_tiles):
             # List of available letter tiles
             tile_letters = [letter for letter, data in self.current_tiles.items() if data['amount'] > 0]
             if tile_letters:
                 selected_tile = random.choice(tile_letters)
-                self.tile_rack.append(selected_tile)
+                self.player_rack.append(selected_tile + str(self.tile_id_counter))
+                self.tile_id_counter += 1
                 self.current_tiles[selected_tile]['amount'] -= 1
-        return self.tile_rack
+        return self.player_rack
 
     def shuffle_tiles(self):
-        random.shuffle(self.tile_rack)
+        random.shuffle(self.player_rack)
 
 class WordManager:
     def __init__(self):
@@ -358,11 +366,17 @@ class BoardManager:
                 if self.board[i][j] == tileID:
                     self.board[i][j] = '_'
         self.board[row-1][col-1] = tileID
-        self.player_moves.append((row-1, col-1, tileID[0]))
+        for i in range(len(self.player_moves)):
+            if self.player_moves[i][2] == tileID[0]: # replace coordinates of old tile
+                self.player_moves[i] = (row-1, col-1, tileID)
+                break
+        else: # add coordinates of new tile
+            self.player_moves.append((row-1, col-1, tileID))
     
     def erase_player_moves(self):
         for move in self.player_moves:
             row, col, tileID = move
+            tile_manager.player_rack.append(tileID)
             self.board[row][col] = '_'
         self.player_moves = []
 

@@ -160,16 +160,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
         let tileLength = tiles.length;
     
         for (let i=0; i < tileLength; i++) {
-            let letter = tiles[i];
-            
-            // Increase the count for this letter
-            if (!tileCounts[letter]) {
-                tileCounts[letter] = 0;
-            }
-            tileCounts[letter] += 1;
+            let letter = tiles[i].charAt(0);
             
             // Use the count to generate the unique ID
-            let tileID = `${letter}${tileCounts[letter]}`;
+            let tileID = tiles[i];
             
             let tileDiv = tileGenerator(letter, tileID);
             tileDiv.className = 'tile-tray';
