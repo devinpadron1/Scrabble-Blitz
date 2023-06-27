@@ -74,10 +74,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         const id = e.dataTransfer.getData('text/plain');
         const draggableElement = document.getElementById(id);
         let dropzone = e.target;
-        if (!dropzone.classList.contains('dropzone')) {
-            dropzone = dropzone.parentNode;
-        }
-        if (dropzone.querySelector(".tile-tray") === null) {  // check if dropzone is empty
+        if (dropzone.classList.contains("board-square") && dropzone.querySelector("div") === null) {  // check if dropzone is empty
             draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
             dropzone.appendChild(draggableElement); // Append it to the dropzone
             // Send tile position to Python
@@ -85,48 +82,37 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 tileID: draggableElement.id,
                 position: dropzone.id,
             };
-            fetch('http://127.0.0.1:5000/tile-position', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(tilePosition),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            sendTilePosition(tilePosition);
         } else {
             console.log('Square is occupied');
         }
         console.log(dropzone.id);
         // Dropping tile from board to tray
         if (dropzone.id == "tray") {
-
             draggableElement.remove();
             dropzone.appendChild(draggableElement);
             let tilePosition = {
                 tileID: draggableElement.id,
                 position: "rack",
             };
-            fetch('http://127.0.0.1:5000/tile-position', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(tilePosition),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            sendTilePosition(tilePosition);
         }
+    }
+
+    function sendTilePosition(tilePosition) {
+        fetch('http://127.0.0.1:5000/tile-position', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tilePosition),
+        })
+          .then(() => {
+            console.log('Success: Tile position sent to the server');
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
     }
 
     function addLetterAndNumber(tileDiv, letter) {
@@ -362,10 +348,4 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }, 1000);
 
     }
-
 })
-
-
-// TODO: Add ability to return tile into stack.
-// TODO: Add ability to move tile within the stack.
-// TODO: Don't allow for tiles to stack on top of each other

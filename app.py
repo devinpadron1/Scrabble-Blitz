@@ -73,10 +73,12 @@ def update_tile_position():
     print(f"Received tile position: {data}")
     tileID = data['tileID']
 
-    # Data Assignment
     if data['position'] == "rack":
         board_manager.remove_tile_from_board(data['tileID'])
-    else:
+        if data['tileID'] not in tile_manager.player_rack:
+            tile_manager.player_rack.append(tileID)
+
+    else: # being placed on board
         position = data['position'].replace('grid','')
         row, col = map(int, position.split('_'))
 
@@ -95,6 +97,7 @@ def update_tile_position():
 def shuffle():
     print(f"Received shuffle request")
     tile_manager.shuffle_tiles()
+    print("Player rack:", tile_manager.player_rack)
     return jsonify({"tiles": tile_manager.player_rack})
 
 @app.route('/discard', methods=['POST'])
@@ -398,8 +401,7 @@ class BoardManager:
             if self.player_moves[i][2] == tileID:
                 self.player_moves.remove(self.player_moves[i])
                 break
-        tile_manager.player_rack.append(tileID)
-
+        
     def display(self):
         for row in self.board:
             print(' '.join(cell[0] for cell in row))
@@ -412,10 +414,17 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID "Fix issue where multiple moves for same tile were being recorded. Enable tiles to be placed from board back to player rack. Enable tiles to be shifted around in player hand."
+# DID "Fix issue where adding tile to hand from hand would create duplicate. Fix issue where clienside was expecting a JSON response when placing a tile on the grid. Fix issue where tiles can be dragged into each other"
 
-# TODO: Fix inability to drag tile to rack
-# TODO: Fix issue where tiles can be dragged into each other
+# TODO: Add ability to reorder tiles in hand manually
 # TODO: Words that dont intercept with existing word are count as valid.
+# TODO: Add discard functionality
 # TODO: Add points functionality. Bonus squares, etc.
+# TODO: Make header text unselectable
+# TODO: Update hiscore if player passes it.
 # TODO: End game when timer runs out
+# TODO: Fix aesthetics of ingame buttons
+# TODO: Add a way to exit the game
+
+# lsof -i :5000
+# kill -9 {num}
