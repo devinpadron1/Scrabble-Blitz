@@ -71,19 +71,23 @@ def load_initial_state():
 def update_tile_position():
     data = request.get_json()
     print(f"Received tile position: {data}")
+    tileID = data['tileID']
 
     # Data Assignment
-    tileID = data['tileID']
-    position = data['position'].replace('grid','')
-    row, col = map(int, position.split('_'))
+    if data['position'] == "rack":
+        board_manager.remove_tile_from_board(data['tileID'])
+    else:
+        position = data['position'].replace('grid','')
+        row, col = map(int, position.split('_'))
 
-    board_manager.add_letter(row, col, tileID)
+        board_manager.add_letter(row, col, tileID)
 
-    if tileID in tile_manager.player_rack:
-        tile_manager.player_rack.remove(tileID)
+        if tileID in tile_manager.player_rack:
+            tile_manager.player_rack.remove(tileID)
 
     board_manager.display()
-    print(tile_manager.player_rack)
+    print("Player rack:", tile_manager.player_rack)
+    print("List of player moves:", board_manager.player_moves)
 
     return ''
 
@@ -148,7 +152,6 @@ def submit():
                     check_for_word_and_add(i, j, 'under')
 
     board_manager.display()
-    print(tile_manager.player_rack)
 
     # Verifies if all words on the board are valid
     all_words_valid = True
@@ -186,6 +189,7 @@ def submit():
         new_player_rack = tile_manager.get_player_tiles(len(unique_tiles_used))
         
         new_player_tiles = [tile for tile in new_player_rack if tile not in old_player_rack]
+        print(tile_manager.player_rack)
 
         board_manager.player_moves = [] # Reset player moves
         response = {
@@ -366,12 +370,15 @@ class BoardManager:
                 if self.board[i][j] == tileID:
                     self.board[i][j] = '_'
         self.board[row-1][col-1] = tileID
+        # Check if this tileID already exists in player_moves
         for i in range(len(self.player_moves)):
-            if self.player_moves[i][2] == tileID[0]: # replace coordinates of old tile
+            if self.player_moves[i][2] == tileID:
+                # If it does, replace the old move with the new one and return
                 self.player_moves[i] = (row-1, col-1, tileID)
-                break
-        else: # add coordinates of new tile
-            self.player_moves.append((row-1, col-1, tileID))
+                return
+                
+        # If we didn't find the tileID in player_moves, append it as a new move
+        self.player_moves.append((row-1, col-1, tileID))
     
     def erase_player_moves(self):
         for move in self.player_moves:
@@ -379,6 +386,19 @@ class BoardManager:
             tile_manager.player_rack.append(tileID)
             self.board[row][col] = '_'
         self.player_moves = []
+    
+    def remove_tile_from_board(self, tileID):
+        # remove tileID from board
+        for i in range(len(self.board)):
+            for j in range(len(self.board[i])):
+                if self.board[i][j] == tileID:
+                    self.board[i][j] = '_'
+        # erase tileID from player move
+        for i in range(len(self.player_moves)):
+            if self.player_moves[i][2] == tileID:
+                self.player_moves.remove(self.player_moves[i])
+                break
+        tile_manager.player_rack.append(tileID)
 
     def display(self):
         for row in self.board:
@@ -392,9 +412,10 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# TODO: ISSUES
+# DID "Fix issue where multiple moves for same tile were being recorded. Enable tiles to be placed from board back to player rack. Enable tiles to be shifted around in player hand."
 
-
+# TODO: Fix inability to drag tile to rack
+# TODO: Fix issue where tiles can be dragged into each other
+# TODO: Words that dont intercept with existing word are count as valid.
 # TODO: Add points functionality. Bonus squares, etc.
-# TODO: If tile from an existing word isn't used then its invalid.
-# TODO: Add timer functionality
+# TODO: End game when timer runs out

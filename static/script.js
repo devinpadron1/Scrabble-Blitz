@@ -73,11 +73,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         console.log('Drop');
         const id = e.dataTransfer.getData('text/plain');
         const draggableElement = document.getElementById(id);
-        const dropzone = e.target;
-        if (!dropzone.classList.contains('board-square')) {
+        let dropzone = e.target;
+        if (!dropzone.classList.contains('dropzone')) {
             dropzone = dropzone.parentNode;
         }
-        if (!dropzone.querySelector(".tile-tray")) {  // check if dropzone is empty
+        if (dropzone.querySelector(".tile-tray") === null) {  // check if dropzone is empty
             draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
             dropzone.appendChild(draggableElement); // Append it to the dropzone
             // Send tile position to Python
@@ -101,6 +101,31 @@ document.addEventListener("DOMContentLoaded", function(event) {
             });
         } else {
             console.log('Square is occupied');
+        }
+        console.log(dropzone.id);
+        // Dropping tile from board to tray
+        if (dropzone.id == "tray") {
+
+            draggableElement.remove();
+            dropzone.appendChild(draggableElement);
+            let tilePosition = {
+                tileID: draggableElement.id,
+                position: "rack",
+            };
+            fetch('http://127.0.0.1:5000/tile-position', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tilePosition),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
     }
 
@@ -154,34 +179,36 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     }
 
-    let tileCounts = {};
-
     function loadTiles(tiles) {
         let tileLength = tiles.length;
-    
+        
+        let container = document.getElementById(`tray`);
+        container.addEventListener('dragover', dragOver);
+        container.addEventListener('dragenter', dragEnter);
+        container.addEventListener('dragleave', dragLeave);
+        container.addEventListener('drop', drop);
+            
         for (let i=0; i < tileLength; i++) {
             let letter = tiles[i].charAt(0);
             
-            // Use the count to generate the unique ID
             let tileID = tiles[i];
             
             let tileDiv = tileGenerator(letter, tileID);
             tileDiv.className = 'tile-tray';
-            let container = document.getElementById(`tray`);
+
             container.appendChild(tileDiv);
         }
     }
     
-    
     // Load the board.
     for (let i = 1; i <= 11; i++) {
         for (let j = 1; j <= 11; j++) {
-            // Create element
             var boardSquare = document.createElement("div");
-            // assign its id
             boardSquare.setAttribute("class", "board-square");
+            
             // assign coordinates
             boardSquare.setAttribute("id", `grid${i}_${j}`);
+            boardSquare.classList.add('dropzone');
             boardSquare.addEventListener('dragover', dragOver);
             boardSquare.addEventListener('dragenter', dragEnter);
             boardSquare.addEventListener('dragleave', dragLeave);
@@ -335,7 +362,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }, 1000);
 
     }
-    
 
 })
 
