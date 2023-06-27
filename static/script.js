@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-
     // Fetch word and rack from Flask
     fetch('http://127.0.0.1:5000/word')
     .then(response => response.json())
@@ -176,14 +175,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
             
         for (let i=0; i < tileLength; i++) {
             let letter = tiles[i].charAt(0);
-            
             let tileID = tiles[i];
-            
             let tileDiv = tileGenerator(letter, tileID);
             tileDiv.className = 'tile-tray';
-
             container.appendChild(tileDiv);
         }
+
+        Sortable.create(container, {
+            animation: 150,
+            ghostClass: 'blue-background-class'
+        })
     }
     
     // Load the board.
