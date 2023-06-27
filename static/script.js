@@ -73,15 +73,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
         const id = e.dataTransfer.getData('text/plain');
         const draggableElement = document.getElementById(id);
         let dropzone = e.target;
-        if (dropzone.classList.contains("board-square") && dropzone.querySelector("div") === null) {  // check if dropzone is empty
-            draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
-            dropzone.appendChild(draggableElement); // Append it to the dropzone
-            // Send tile position to Python
-            let tilePosition = {
-                tileID: draggableElement.id,
-                position: dropzone.id,
-            };
+        if (dropzone.classList.contains("board-square")) {  // check if dropzone is empty
+            if (!draggableElement.classList.contains('dragging')) {
+                console.log('Cannot move this tile');
+                return;
+            }
+            if(dropzone.querySelector("div") === null) {  // check if dropzone is empty
+                draggableElement.parentNode.removeChild(draggableElement); // Remove the tile from its original parent
+                dropzone.appendChild(draggableElement); // Append it to the dropzone
+                // Send tile position to Python
+                let tilePosition = {
+                    tileID: draggableElement.id,
+                    position: dropzone.id,
+            }
             sendTilePosition(tilePosition);
+            };
         } else {
             console.log('Square is occupied');
         }
@@ -134,8 +140,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         tileDiv.setAttribute('draggable', true);
         tileDiv.setAttribute('id', id);  // Assign a unique ID to the tile
         tileDiv.classList.add("tile");
-        tileDiv.addEventListener('dragstart', dragStart);
-        tileDiv.addEventListener('dragend', dragEnd);
+
+        Sortable.create(tray, {
+            animation: 150,
+            ghostClass: 'blue-background-class'
+        });        
 
         return tileDiv
     }
@@ -178,13 +187,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
             let tileID = tiles[i];
             let tileDiv = tileGenerator(letter, tileID);
             tileDiv.className = 'tile-tray';
+            // tileDiv.addEventListener('dragstart', dragStart);
+            // tileDiv.addEventListener('dragend', dragEnd);
             container.appendChild(tileDiv);
         }
 
         Sortable.create(container, {
             animation: 150,
-            ghostClass: 'blue-background-class'
-        })
+            ghostClass: 'blue-background-class',
+            onStart: function (/**Event*/evt) {
+                evt.item.classList.add('dragging');
+            },
+            onEnd: function (/**Event*/evt) {
+                evt.item.classList.remove('dragging');
+            }
+        });
     }
     
     // Load the board.
