@@ -62,6 +62,7 @@ def load_initial_state():
     board_manager.clear_board()
     board_manager.add_first_word(word, position, orientation) # Adds it to server-side grid
     board_manager.display()
+    board_manager.existing_words[word] = "" 
 
     print(tiles)
 
@@ -163,6 +164,11 @@ def submit():
 
     board_manager.display()
 
+    # Add coordinates to existing word dictionary
+    for key in words_on_board:
+        if key in board_manager.existing_words:
+            board_manager.existing_words[key] = words_on_board[key]
+
     # Verifies if all words on the board are valid
     all_words_valid = True
     for word in words_on_board:
@@ -180,12 +186,7 @@ def submit():
     if not bool(board_manager.player_moves): # if player moves is empty
         all_words_intercept = True
     else:
-        all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
-    
-    all_words_intercept = all( # check all pos of tiles in player_moves are present in some key of words_on_board
-        any(move in positions for positions in words_on_board.values())
-        for move in [(move[0], move[1]) for move in board_manager.player_moves]
-    )
+        all_words_intercept = word_manager.intercept_check(words_on_board)
 
     if all_words_valid and all_words_intercept and bool(board_manager.player_moves):
         tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
@@ -342,35 +343,19 @@ class WordManager:
         elif start[0] == end[0]: # Horizontal word (constant x)
             return [(start[0], y) for y in range(start[1], end[1] + 1)]
 
-    def intercept_check(self, words_on_board, player_moves):
-        # Convert player_moves to a set for faster lookups
-        player_moves_set = {(x[0], x[1]) for x in player_moves} # removes letter
-        
-        # Initialize two empty sets to hold positions of the player's words and the existing words
-        player_words_positions = set()
-        existing_words_positions = set()
-
-        for word, positions in words_on_board.items():
-            # Convert positions to a set
-            positions_set = set(tuple(pos) for pos in positions)
-
-            # Check if any positions in the word are in the player's moves
-            if positions_set & player_moves_set:
-                player_words_positions.update(positions_set)
-            else:
-                existing_words_positions.update(positions_set)
-        
-        # If any position in the player's words intersects with the positions of the existing words, return True
-        if player_words_positions & existing_words_positions:
-            return True
-        # If no intersections were found, return False
-        return False
-
+    def intercept_check(self, words_on_board):
+        # For each word in words_on_board, check if it shares a coordinate with any word in existing_words
+        for word_board, coords_board in words_on_board.items():
+            coords_board_set = set(coords_board)  # convert list of coordinates to set for faster operations
+            if not any(coords_board_set.intersection(set(coords_existing)) for word_existing, coords_existing in board_manager.existing_words.items()):
+                return False
+        return True
 
 class BoardManager:
     def __init__(self, size=11): # Generate board
         self.board = [['_' for _ in range(size)] for _ in range(size)]
         self.player_moves = []
+        self.existing_words = {}
 
     def clear_board(self, size=11):
         self.board = [['_' for _ in range(size)] for _ in range(size)]
@@ -435,7 +420,6 @@ if __name__ == '__main__':
 
 # DID: "..."
 
-# TODO: Words that dont intercept with existing word are count as valid.
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.
