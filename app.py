@@ -103,6 +103,13 @@ def shuffle():
 @app.route('/discard', methods=['POST'])
 def discard():
     print(f"Received discard request")
+    
+    tiles, discards = tile_manager.discard_tiles()
+    print("New player rack:", tile_manager.player_rack)
+    return jsonify({
+        "tiles": tiles,
+        "discards": discards,
+    })
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -221,6 +228,8 @@ class TileManager:
         self.current_tiles = {letter: {'points': values['points'], 'amount': values['amount']} for letter, values in DEFAULT_TILES.items()}
         self.player_rack = []
         self.tile_id_counter = 0
+        self.tiles_to_discard = 0
+        self.discards = 2
 
     def get_player_tiles(self, num_tiles): # Generates player-held tiles
         # Add random, available tiles to player_rack
@@ -233,6 +242,16 @@ class TileManager:
                 self.tile_id_counter += 1
                 self.current_tiles[selected_tile]['amount'] -= 1
         return self.player_rack
+
+    def discard_tiles(self):
+        self.tiles_to_discard = 0
+        if self.discards > 0:
+            for tile in self.player_rack.copy():
+                self.player_rack.remove(tile)
+                self.current_tiles[tile[0]]['amount'] += 1
+                self.tiles_to_discard += 1
+            self.discards -= 1
+            return self.get_player_tiles(self.tiles_to_discard), self.discards
 
     def shuffle_tiles(self):
         random.shuffle(self.player_rack)
@@ -417,7 +436,6 @@ if __name__ == '__main__':
 # DID: "..."
 
 # TODO: Words that dont intercept with existing word are count as valid.
-# TODO: Add discard functionality
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.

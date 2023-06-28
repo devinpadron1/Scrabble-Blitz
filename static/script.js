@@ -172,8 +172,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         })
         .then(data => {
             if (data.message) {
-                document.querySelector('#message span').innerText = data.message;
-                document.querySelector('#message span').style.color = 'red';
+                displayMessage(data.message, 'red')
             }
             if (data.tiles_to_remove) {
                 for (let pos of data.tiles_to_remove) {
@@ -189,8 +188,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
             // Changes to be made after valid move
             if (data.status == 200) {
-                document.querySelector('#message span').innerText = data.message;
-                document.querySelector('#message span').style.color = 'green';
+                displayMessage(data.message, 'green')
 
                 // Change class of tiles on the board from 'tile-tray' to 'tile-ingame'
                 let boardContainer = document.getElementById('board-square-container');
@@ -225,6 +223,34 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
             // Load the new shuffled tiles
             loadPlayerTiles(data.tiles);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    });
+
+    // Discard button
+    document.getElementById('discard').addEventListener('click', function() {
+        fetch('http://127.0.0.1:5000/discard', {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                displayMessage(data.message, 'red')
+            } else {
+                let tray = document.querySelector('#tray');
+                while (tray.firstChild) { // Empty tray
+                    tray.removeChild(tray.firstChild);
+                }
+                loadPlayerTiles(data.tiles);
+                let discards = data.discards;
+                document.getElementById('discard').textContent = `Discard (${discards})`;
+                if (discards === 0) {
+                    document.getElementById('discard').disabled = true;
+                    displayMessage('You ran out of discards.', 'red')
+                }
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -301,6 +327,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         });
     }
     
+    function displayMessage(message, color) {
+        document.querySelector('#message span').innerText = message;
+        document.querySelector('#message span').style.color = color;
+    }
+
     function startTimer() {
         // Set the initial time (in seconds)
         let timeRemaining = 2 * 60;
