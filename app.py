@@ -73,14 +73,14 @@ def update_tile_position():
     print(f"Received tile position: {data}")
     tileID = data['tileID']
 
-    if data['position'] == "rack":
+    if data['position'] == "tray":
         board_manager.remove_tile_from_board(data['tileID'])
         if data['tileID'] not in tile_manager.player_rack:
             tile_manager.player_rack.append(tileID)
 
     else: # being placed on board
-        position = data['position'].replace('grid','')
-        row, col = map(int, position.split('_'))
+        coordinates = data['squareID'].replace('grid','')
+        row, col = map(int, coordinates.split('_'))
 
         board_manager.add_letter(row, col, tileID)
 
@@ -414,9 +414,8 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID "Fix issue where adding tile to hand from hand would create duplicate. Fix issue where clienside was expecting a JSON response when placing a tile on the grid. Fix issue where tiles can be dragged into each other"
+# DID: "..."
 
-# TODO: Add ability to reorder tiles in hand manually
 # TODO: Words that dont intercept with existing word are count as valid.
 # TODO: Add discard functionality
 # TODO: Add points functionality. Bonus squares, etc.
@@ -425,6 +424,7 @@ if __name__ == '__main__':
 # TODO: End game when timer runs out
 # TODO: Fix aesthetics of ingame buttons
 # TODO: Add a way to exit the game
+# TODO: Add sound effects
 
 # lsof -i :5000
 # kill -9 {num}
