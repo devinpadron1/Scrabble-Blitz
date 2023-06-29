@@ -285,10 +285,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 
     function preventPlacementIfTaken(evt) {
+        if (evt.to.id === "tray") {
+            return true;
+        }
         // if the target already has a child that is a div (i.e., a tile), cancel the move
         let children = evt.to.children;
         for (let j = 0; j < evt.to.children.length; j++) {
-            if (children[j].nodeName === 'DIV' && children[j].classList.contains('tile-ingame')) {
+            if (children[j].nodeName === 'DIV' && (children[j].classList.contains('tile-ingame') || children[j].classList.contains('tile-tray'))) {
                 return false;
             }
         }
@@ -318,9 +321,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             },
             body: JSON.stringify(data),
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log('Data successfully sent to the server.');
         })
         .catch((error) => {
             console.error('Error:', error);

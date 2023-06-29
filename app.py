@@ -119,8 +119,9 @@ def submit():
     taken_spaces_horizontal = [] # Spaces wont be checked in horizontal direction
     taken_spaces_vertical = []  # Same as ^ in vertical direction
     words_on_board = {}
+    all_words_valid = True
     
-    def add_word(row, col, direction): # Returns word and spaces it takes up
+    def add_word(row, col, direction): # Returns word and spaces it takes up        
         word, taken_hor, taken_ver = word_manager.check_word(row, col, direction) 
         if direction == "right":
             taken_spaces_horizontal.extend(taken_hor)
@@ -131,10 +132,13 @@ def submit():
 
     # Check if a word can be formed in a direction
     def check_for_word_and_add(row, col, direction):
+        nonlocal all_words_valid
         if word_manager.check_under(row, col)[0].isalpha() and direction == 'under':
             add_word(row, col, "under")
         elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
             add_word(row, col, "right")
+        else:
+            all_words_valid = False
 
     # Loop through the grid, recognizing any valid word
     for i in range(11):
@@ -170,23 +174,23 @@ def submit():
             board_manager.existing_words[key] = words_on_board[key]
 
     # Verifies if all words on the board are valid
-    all_words_valid = True
-    for word in words_on_board:
-        if word not in words_list:
-            print(word, "is not a valid word")
-            all_words_valid = False
-            response = {
-                'message': f'{word} is not a valid word. Try again.',
-                'tiles_to_remove': board_manager.player_moves
-            }
-            board_manager.erase_player_moves()
-            print(board_manager.display())
-            return jsonify(response), 400 # 400 communicates client error
+    if all_words_valid:
+        for word in words_on_board:
+            if word not in words_list:
+                print(word, "is not a valid word")
+                all_words_valid = False
+                response = {
+                    'message': f'{word} is not a valid word. Try again.',
+                    'tiles_to_remove': board_manager.player_moves
+                }
+                board_manager.erase_player_moves()
+                print(board_manager.display())
+                return jsonify(response), 400 # 400 communicates client error
     
     if not bool(board_manager.player_moves): # if player moves is empty
         all_words_intercept = True
     else:
-        all_words_intercept = word_manager.intercept_check(words_on_board)
+        all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
 
     if all_words_valid and all_words_intercept and bool(board_manager.player_moves):
         tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
@@ -343,7 +347,7 @@ class WordManager:
         elif start[0] == end[0]: # Horizontal word (constant x)
             return [(start[0], y) for y in range(start[1], end[1] + 1)]
 
-    def intercept_check(self, words_on_board):
+    def intercept_check(self, words_on_board, player_moves):
         # For each word in words_on_board, check if it shares a coordinate with any word in existing_words
         for word_board, coords_board in words_on_board.items():
             coords_board_set = set(coords_board)  # convert list of coordinates to set for faster operations
@@ -418,8 +422,9 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: "..."
+# DID: "Fix 'Unexpected end of JSON input' error in console. Fix issue where player tiles can be stacked on top of each other."
 
+# TODO: Fix issue where you can't return tile from board to hand.
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.
