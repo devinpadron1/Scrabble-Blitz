@@ -137,8 +137,6 @@ def submit():
             add_word(row, col, "under")
         elif word_manager.check_right(row, col)[0].isalpha() and direction == 'right':
             add_word(row, col, "right")
-        else:
-            all_words_valid = False
 
     # Loop through the grid, recognizing any valid word
     for i in range(11):
@@ -190,15 +188,18 @@ def submit():
     if not bool(board_manager.player_moves): # if player moves is empty
         all_words_intercept = True
     else:
-        all_words_intercept = word_manager.intercept_check(words_on_board, board_manager.player_moves)
+        all_words_intercept = word_manager.all_moves_intersect(words_on_board)
 
+    # Valid submission
     if all_words_valid and all_words_intercept and bool(board_manager.player_moves):
-        tiles_used_positions = [(move[0], move[1]) for move in board_manager.player_moves]
-        
+        new_words_this_turn = []
         # word player created based on moves       
-        word = next((word for word, positions in words_on_board.items() 
-                    if tiles_used_positions[0] in positions), None)
-
+        for word, coord in words_on_board.items():
+            if word not in board_manager.existing_words:
+                board_manager.existing_words[word] = coord # Add new words to existing words
+                new_words_this_turn.append(word)
+        
+        word = new_words_this_turn[0]
         unique_tiles_used = set([move[2] for move in board_manager.player_moves])
         old_player_rack = copy.deepcopy(tile_manager.player_rack)
         new_player_rack = tile_manager.get_player_tiles(len(unique_tiles_used))
@@ -206,7 +207,9 @@ def submit():
         new_player_tiles = [tile for tile in new_player_rack if tile not in old_player_rack]
         print(tile_manager.player_rack)
 
-        board_manager.player_moves = [] # Reset player moves
+        board_manager.player_moves = []
+        board_manager.player_moves_coords = []
+        
         response = {
             'message': f'{word} is a valid word. Create a new word.',
             'tiles': new_player_tiles,
@@ -264,6 +267,7 @@ class TileManager:
 class WordManager:
     def __init__(self):
         self.filtered_words = [word for word in words_list if len(word) <= 7]
+        self.points = 0
     
     def get_first_word(self):                
         word_not_in_board = True
@@ -347,18 +351,76 @@ class WordManager:
         elif start[0] == end[0]: # Horizontal word (constant x)
             return [(start[0], y) for y in range(start[1], end[1] + 1)]
 
-    def intercept_check(self, words_on_board, player_moves):
-        # For each word in words_on_board, check if it shares a coordinate with any word in existing_words
-        for word_board, coords_board in words_on_board.items():
-            coords_board_set = set(coords_board)  # convert list of coordinates to set for faster operations
-            if not any(coords_board_set.intersection(set(coords_existing)) for word_existing, coords_existing in board_manager.existing_words.items()):
-                return False
-        return True
+    def all_moves_intersect(self, words_on_board):
+        # Flattening the list of coordinates in existing_words
+        existing_coords = [coord for coords in board_manager.existing_words.values() for coord in coords]
+        # Counter for new words that intersect with existing words
+        intersect_counter = 0
+        for move in board_manager.player_moves_coords:
+            for word, coords in words_on_board.items():
+                if move in coords:  # If a move is part of a word
+                    if any(coord in existing_coords for coord in coords):  # and if that word intersects with existing words
+                        intersect_counter += 1
+                        break
+        # If the counter equals the number of new words, all new words intersect with existing words
+        return intersect_counter == len(board_manager.player_moves_coords)
+    
+    def get_player_words(self, words_on_board):
+        player_words = {}
+        for word, coordinates in words_on_board:
+            for coord in coordinates:
+                if coord in board_manager.player_moves_coords:
+                    player_words[word] = coordinates
+        return player_words
+
+    def get_points(self, words_on_board):
+        player_words = self.get_player_words(words_on_board)
+        points = 0
+        double_word = False
+        triple_word = False
+
+        # player_words {      <- coordinates ->
+        #           'word1': [(1,2), (1,3) ...],
+        #           'word2': [(8,3), (9,3) ...]
+        # }                     ^ coordinate
+
+        for word, coordinates in player_words:
+            for coordinate in coordinates:
+                row = coordinate[0]
+                col = coordinate[1]
+                letter = board_manager.board[row][col] # find letter in position
+                letter_Points = DEFAULT_TILES[letter]['points'] # find letter value
+                
+                # BONUS_SQUARES = {  spaces ->
+                #       'TW': [[0,0], [1,1], ...]
+                # }              ^ space
+
+                for multiplier, spaces in BONUS_SQUARES:
+                    for space in spaces:
+                        if coordinate == space: 
+                            if multiplier.startswith('D'):
+                                if multiplier.endswith('L'):
+                                    points += letter_Points * 2
+                                elif multiplier.endswith('W'):
+                                    double_word = True
+                            elif multiplier.startswith('T'): 
+                                if multiplier.endswith('L'):
+                                    points += letter_Points * 3
+                                elif multiplier.endswith('W'):
+                                    triple_word = True
+            if double_word:
+                points *= 2
+            elif triple_word:
+                points *= 3
+            double_word = False
+            triple_word = False
+        return self.points
 
 class BoardManager:
     def __init__(self, size=11): # Generate board
         self.board = [['_' for _ in range(size)] for _ in range(size)]
-        self.player_moves = []
+        self.player_moves = []          # [(10, 7, 'L6')]
+        self.player_moves_coords = []   # [(10, 7)]
         self.existing_words = {}
 
     def clear_board(self, size=11):
@@ -386,10 +448,12 @@ class BoardManager:
             if self.player_moves[i][2] == tileID:
                 # If it does, replace the old move with the new one and return
                 self.player_moves[i] = (row-1, col-1, tileID)
+                self.player_moves_coords[i] = (row-1, col-1)
                 return
                 
         # If we didn't find the tileID in player_moves, append it as a new move
         self.player_moves.append((row-1, col-1, tileID))
+        self.player_moves_coords.append((row-1, col-1))
     
     def erase_player_moves(self):
         for move in self.player_moves:
@@ -397,6 +461,7 @@ class BoardManager:
             tile_manager.player_rack.append(tileID)
             self.board[row][col] = '_'
         self.player_moves = []
+        self.player_moves_coords = []
     
     def remove_tile_from_board(self, tileID):
         # remove tileID from board
@@ -409,7 +474,12 @@ class BoardManager:
             if self.player_moves[i][2] == tileID:
                 self.player_moves.remove(self.player_moves[i])
                 break
-        
+    
+    def get_move_coordinates(self):
+        for coords in self.player_moves:
+            self.player_moves_coords.append((coords[0], coords[1]))
+        return self.player_moves_coords
+
     def display(self):
         for row in self.board:
             print(' '.join(cell[0] for cell in row))
@@ -422,16 +492,18 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: "Fix 'Unexpected end of JSON input' error in console. Fix issue where player tiles can be stacked on top of each other."
+# DID: "Fix issue with intercept function check."
 
-# TODO: Fix issue where you can't return tile from board to hand.
+# TODO: Add valid words to existing words dictionary
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.
 # TODO: End game when timer runs out
 # TODO: Fix aesthetics of ingame buttons
 # TODO: Add a way to exit the game
+# TODO: Make drag and drop smoother. Try to remove copy.
 # TODO: Add sound effects
+# TODO: Fix loading lag of image in main menu.
 
 # lsof -i :5000
 # kill -9 {num}
