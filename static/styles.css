@@ -3,7 +3,7 @@
 }
 
 /* Remove highlighting */
-.tile-ingame, .tile-tray, .board-square {
+.tile-ingame, .tile-tray, .board-square , #top-container{
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;

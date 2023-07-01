@@ -205,7 +205,6 @@ def submit():
         print(tile_manager.player_rack)
 
         points = word_manager.get_points(words_on_board)
-        print("Player scored", points, "points.")
 
         board_manager.player_moves = []
         board_manager.player_moves_coords = []
@@ -378,12 +377,13 @@ class WordManager:
         player_words = self.get_player_words(words_on_board)
 
         for word, coordinates in player_words.items():
+            word_points = 0
+            double_word = False
+            triple_word = False
             for tile in coordinates:
-                double_word = False
-                triple_word = False
-                multiplier_used = False
                 row = tile[0]
                 col = tile[1]
+                multiplier_used = False
                 letter = board_manager.board[row][col][0] # find letter in position
                 letter_points = DEFAULT_TILES[letter]['points'] # find letter value
                 
@@ -400,22 +400,24 @@ class WordManager:
                     if tile in multiplier_spaces:
                         if multiplier.startswith('D'):
                             if multiplier.endswith('L'):
-                                self.points += letter_points * 2
+                                word_points += letter_points * 2
                                 multiplier_used = True
                             elif multiplier.endswith('W'):
                                 double_word = True
                         elif multiplier.startswith('T'): 
                             if multiplier.endswith('L'):
-                                self.points += letter_points * 3
+                                word_points += letter_points * 3
                                 multiplier_used = True
                             elif multiplier.endswith('W'):
                                 triple_word = True
-                if not multiplier_used and not double_word and not triple_word:
-                    self.points += letter_points
-                if double_word:
-                    self.points *= 2
-                elif triple_word:
-                    self.points *= 3
+                if not multiplier_used:
+                    word_points += letter_points
+            if double_word:
+                word_points = word_points * 2
+            elif triple_word:
+                word_points = word_points * 3
+            self.points += word_points
+        print("Player scored", word_points, "points. \nTotal Points:", self.points)
         return self.points
 
 class BoardManager:
@@ -498,7 +500,6 @@ if __name__ == '__main__':
 
 # DID: ""
 
-# TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.
 # TODO: End game when timer runs out
