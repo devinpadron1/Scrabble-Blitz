@@ -37,11 +37,11 @@ DEFAULT_TILES = {
 }
 
 BONUS_SQUARES = {
-    'TW': [[0,0], [0,10], [10,0], [10,10]],
-    'TL': [[0,5], [2,2], [2,8], [5,0], [5,10], [8,2], [8,8], [10,5]],
-    'DW': [[1,1], [1,9], [3,3], [3,7], [5,5], [7,3], [7,7], [9,1], [9,9]],
-    'DL': [[0,3], [0,7], [2,5], [3,0], [3,10], [4,4], [4,6],
-           [5,2], [5,8], [6,4], [6,6], [7,0], [7,10], [8,5], [10,3], [10,7]],
+    'TW': [(0, 0), (0, 10), (10, 0), (10, 10)],
+    'TL': [(0, 5), (2, 2), (2, 8), (5, 0), (5, 10), (8, 2), (8, 8), (10, 5)],
+    'DW': [(1, 1), (1, 9), (3, 3), (3, 7), (5, 5), (7, 3), (7, 7), (9, 1), (9, 9)],
+    'DL': [(0, 3), (0, 7), (2, 5), (3, 0), (3, 10), (4, 4), (4, 6), (5, 2),
+           (5, 8), (6, 4), (6, 6), (7, 0), (7, 10), (8, 5), (10, 3), (10, 7)],
 }
 
 @app.route('/', methods=['GET'])
@@ -55,6 +55,8 @@ def home():
 @app.route('/word', methods=['GET'])
 def load_initial_state():    
     word = word_manager.get_first_word()
+    board_manager.existing_words[word] = []
+
     position, orientation = word_manager.initial_position(word)
 
     tiles = tile_manager.get_player_tiles(7)
@@ -62,7 +64,7 @@ def load_initial_state():
     board_manager.clear_board()
     board_manager.add_first_word(word, position, orientation) # Adds it to server-side grid
     board_manager.display()
-    board_manager.existing_words[word] = "" 
+    word_manager.points = 0
 
     print(tiles)
 
@@ -166,11 +168,6 @@ def submit():
 
     board_manager.display()
 
-    # Add coordinates to existing word dictionary
-    for key in words_on_board:
-        if key in board_manager.existing_words:
-            board_manager.existing_words[key] = words_on_board[key]
-
     # Verifies if all words on the board are valid
     if all_words_valid:
         for word in words_on_board:
@@ -207,12 +204,16 @@ def submit():
         new_player_tiles = [tile for tile in new_player_rack if tile not in old_player_rack]
         print(tile_manager.player_rack)
 
+        points = word_manager.get_points(words_on_board)
+        print("Player scored", points, "points.")
+
         board_manager.player_moves = []
         board_manager.player_moves_coords = []
         
         response = {
             'message': f'{word} is a valid word. Create a new word.',
             'tiles': new_player_tiles,
+            'points': points,
             'status': 200
         }
         return jsonify(response)
@@ -367,7 +368,7 @@ class WordManager:
     
     def get_player_words(self, words_on_board):
         player_words = {}
-        for word, coordinates in words_on_board:
+        for word, coordinates in words_on_board.items():
             for coord in coordinates:
                 if coord in board_manager.player_moves_coords:
                     player_words[word] = coordinates
@@ -375,45 +376,46 @@ class WordManager:
 
     def get_points(self, words_on_board):
         player_words = self.get_player_words(words_on_board)
-        points = 0
-        double_word = False
-        triple_word = False
 
-        # player_words {      <- coordinates ->
-        #           'word1': [(1,2), (1,3) ...],
-        #           'word2': [(8,3), (9,3) ...]
-        # }                     ^ coordinate
-
-        for word, coordinates in player_words:
-            for coordinate in coordinates:
-                row = coordinate[0]
-                col = coordinate[1]
-                letter = board_manager.board[row][col] # find letter in position
-                letter_Points = DEFAULT_TILES[letter]['points'] # find letter value
+        for word, coordinates in player_words.items():
+            for tile in coordinates:
+                double_word = False
+                triple_word = False
+                multiplier_used = False
+                row = tile[0]
+                col = tile[1]
+                letter = board_manager.board[row][col][0] # find letter in position
+                letter_points = DEFAULT_TILES[letter]['points'] # find letter value
                 
-                # BONUS_SQUARES = {  spaces ->
-                #       'TW': [[0,0], [1,1], ...]
-                # }              ^ space
+                # player_words {      <- coordinates ->
+                #           'word1': [(1,2), (1,3) ...],
+                #           'word2': [(8,3), (9,3) ...]
+                # }                     ^ tile
 
-                for multiplier, spaces in BONUS_SQUARES:
-                    for space in spaces:
-                        if coordinate == space: 
-                            if multiplier.startswith('D'):
-                                if multiplier.endswith('L'):
-                                    points += letter_Points * 2
-                                elif multiplier.endswith('W'):
-                                    double_word = True
-                            elif multiplier.startswith('T'): 
-                                if multiplier.endswith('L'):
-                                    points += letter_Points * 3
-                                elif multiplier.endswith('W'):
-                                    triple_word = True
-            if double_word:
-                points *= 2
-            elif triple_word:
-                points *= 3
-            double_word = False
-            triple_word = False
+                # BONUS_SQUARES = { mult.spaces ->
+                #       'TW': [[0,0], [1,1], ...]
+                # }
+
+                for multiplier, multiplier_spaces in BONUS_SQUARES.items():
+                    if tile in multiplier_spaces:
+                        if multiplier.startswith('D'):
+                            if multiplier.endswith('L'):
+                                self.points += letter_points * 2
+                                multiplier_used = True
+                            elif multiplier.endswith('W'):
+                                double_word = True
+                        elif multiplier.startswith('T'): 
+                            if multiplier.endswith('L'):
+                                self.points += letter_points * 3
+                                multiplier_used = True
+                            elif multiplier.endswith('W'):
+                                triple_word = True
+                if not multiplier_used and not double_word and not triple_word:
+                    self.points += letter_points
+                if double_word:
+                    self.points *= 2
+                elif triple_word:
+                    self.points *= 3
         return self.points
 
 class BoardManager:
@@ -432,9 +434,11 @@ class BoardManager:
         if orientation == "horizontal":
             for i, letter in enumerate(word):
                 self.board[row][col+i-position] = letter
+                board_manager.existing_words[word].append((row, col+i-position))
         elif orientation == "vertical":
             for i, letter in enumerate(word):
                 self.board[row+i-position][col] = letter
+                board_manager.existing_words[word].append((row+i-position, col))
 
     def add_letter(self, row, col, tileID):
         # If tile found in board, remove it
@@ -492,9 +496,8 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: "Fix issue with intercept function check."
+# DID: ""
 
-# TODO: Add valid words to existing words dictionary
 # TODO: Add points functionality. Bonus squares, etc.
 # TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.

@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
             // Changes to be made after valid move
             if (data.status == 200) {
-                displayMessage(data.message, 'green')
+                displayMessage(data.message, 'green')             
 
                 // Change class of tiles on the board from 'tile-tray' to 'tile-ingame'
                 let boardContainer = document.getElementById('board-square-container');
@@ -197,6 +197,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     tile.classList.add('tile-ingame');
                     tile.classList.remove('tile-tray');
                 });
+                
+                document.querySelector('#points').innerText = data.points;
+
                 // Load new tiles into player's hand
                 if (data.tiles) {
                     let playerTiles = data.tiles;
