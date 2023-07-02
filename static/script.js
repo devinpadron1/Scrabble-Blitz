@@ -90,11 +90,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
         // Adds ability to drag and sort tiles in player hand.
         Sortable.create(container, {
             group: 'shared',
-            animation: 100,
+            animation: 50,
             onMove: evt => preventPlacementIfTaken(evt),
             onEnd: evt => {
                 sendTilePlacementToServer(evt.item.id, evt.to.id);
-            }
+            },
+            chosenClass: 'sortable-chosen',
+            forceFallback: true,
+            fallbackClass: 'sortable-fallback',
+            ghostClass: 'sortable-ghost',
+            tolerance: 'pointer',
+            swapThreshold: 0.65,
+            invertSwap: true,
         });
     }
 
@@ -282,7 +289,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 onMove: evt => preventPlacementIfTaken(evt),
                 onEnd: evt => {
                     sendTilePlacementToServer(evt.item.id, evt.to.id);
-                }
+                },
+                chosenClass: 'sortable-chosen',
+                forceFallback: true,
+                fallbackClass: 'sortable-fallback',
+                ghostClass: 'sortable-ghost',
+                tolerance: 'pointer',
+                swapThreshold: 0.65,
+                invertSwap: true,
             });
         }
     }

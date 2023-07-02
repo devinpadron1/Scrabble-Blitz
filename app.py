@@ -498,14 +498,12 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: ""
+# DID: "Make drag and drop smoother. Remove copy jittery copy of tile. Fix aesthetics of ingame buttons. Remove hover effect from discard button after button is disabled. Add footer to end of webpage."
 
-# TODO: Make header text unselectable
 # TODO: Update hiscore if player passes it.
+# TODO: Remove message when player clicks a tile.
 # TODO: End game when timer runs out
-# TODO: Fix aesthetics of ingame buttons
 # TODO: Add a way to exit the game
-# TODO: Make drag and drop smoother. Try to remove copy.
 # TODO: Add sound effects
 # TODO: Fix loading lag of image in main menu.
 

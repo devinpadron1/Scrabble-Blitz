@@ -12,6 +12,10 @@
 
 body {
     font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 #instructions {
@@ -44,17 +48,6 @@ body {
     background-color: rgb(227, 226, 226);
     border: 1px solid white;
     position: relative;
-}
-
-#in-game-buttons {
-    display: flex;
-    justify-content: space-between;
-    width: 300px;
-}
-#in-game-buttons button{
-    font-size: 20px;
-    border-radius: 5px;
-    border-width: 1px;
 }
 
 span {
@@ -100,8 +93,13 @@ span {
     font-size: 30px;
     font-weight: bold;
     z-index: 2;
-
     position: relative;
+}
+
+.tile-tray:hover {
+    height: 52px;
+    width: 52px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* offset-x | offset-y | blur-radius | color */
 }
 
 .tile-ingame {
@@ -114,7 +112,7 @@ span {
     justify-content: center;
     align-items: center;
     background-color: rgb(233, 213, 188);
-    border: .5px solid black;
+    border: 0px solid black;
     padding: 10px;
     width: 360px;
     height: 40px;
@@ -173,10 +171,47 @@ span {
 #submit {
     background-color: lightgreen;
 }
+#play-button:hover,
+#submit:hover {
+    background-color: rgb(73, 231, 73);
+}
 
 #play-button {
     font-size: 40px;
+    height: 100px;
+    width: 200px;
+    border-radius: 25px;
+    border: 5px solid black;
 }
+
+#in-game-buttons {
+    display: flex;
+    justify-content: space-between;
+    height: 50px;
+}
+#in-game-buttons button{
+    width: 90px;
+    font-size: 20px;
+    border-radius: 5px;
+    border-width: 3px;
+    margin: 0 5px;
+}
+#in-game-buttons #submit {
+    width: 140px;
+    font-size: 24px;
+}
+
+#shuffle-button { background-color: rgb(232, 232, 255);}
+#shuffle-button:hover { background-color: rgb(165, 165, 251);}
+
+#discard { 
+    background-color: rgb(251, 203, 203);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#discard:hover { background-color: rgb(251, 123, 123);}
+#discard:disabled:hover { background-color: rgb(251, 203, 203);}
 
 #message {
     height: 20px;
@@ -189,4 +224,32 @@ span {
 img {
     margin-top: 80px;
     width: 300px;
+}
+
+.sortable-ghost {
+    visibility: hidden;
+}
+
+.sortable-chosen {
+    opacity: 1 !important;
+}
+
+@media (max-height: 950px) {
+    #footer {
+        display: none;
+    }
+}
+
+#footer {
+    font-size: 14px;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+}
+
+#github-logo {
+    height: 14px;
+    width: auto;
 }
