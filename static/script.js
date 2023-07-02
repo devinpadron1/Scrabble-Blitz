@@ -32,8 +32,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
     let dropSound = new Audio("static/tile_drop.mp3");
     let invalidSound = new Audio("static/invalid.mp3");
     let validSound = new Audio("static/valid.mp3");
+    let highScoreSound = new Audio("static/high-score.mp3");
     invalidSound.volume = .4;
     dropSound.volume = .8;
+    highScoreSound.volume = .8;
 
     document.getElementById('play-button').addEventListener('click', function() {
         document.getElementById('instructions').style.display = 'none';
@@ -182,6 +184,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
         makeSquaresDroppable();
     }
 
+    let highScoreAchieved = false
+
     document.getElementById('submit').addEventListener('click', function() {
         fetch('http://127.0.0.1:5000/submit', {
             method: 'POST'
@@ -220,6 +224,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 });
                 
                 document.querySelector('#points').innerText = data.points;
+                if (data.points > 100 && !highScoreAchieved) {
+                    displayMessage("New high score achieved! Congratulations!", 'blue');
+                    document.querySelector('#message span').style.fontWeight = 'bold';
+                    highScoreSound.play();
+                    highScoreAchieved = true;
+                }
+
+                if (highScoreAchieved) {
+                    document.querySelector('#high-score').innerHTML = data.points;
+                }
 
                 // Load new tiles into player's hand
                 if (data.tiles) {
@@ -374,6 +388,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     function displayMessage(message, color) {
         document.querySelector('#message span').innerText = message;
         document.querySelector('#message span').style.color = color;
+        document.querySelector('#message span').style.fontWeight = 'normal';
     }
 
     function startTimer() {

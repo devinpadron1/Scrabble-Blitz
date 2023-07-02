@@ -501,7 +501,7 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: Remove message when player clicks a tile. Add sound effects.
+# DID: ...
 
 # TODO: Add high-score sound effect. And end of game
 # TODO: At end of game, replace buttons with Play Again button.
