@@ -29,9 +29,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
         'Z': 10
     };
 
+    let dropSound = new Audio("static/tile_drop.mp3");
+    let invalidSound = new Audio("static/invalid.mp3");
+    let validSound = new Audio("static/valid.mp3");
+    invalidSound.volume = .4;
+    dropSound.volume = .8;
+
     document.getElementById('play-button').addEventListener('click', function() {
         document.getElementById('instructions').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
+        dropSound.play();
         startGame(); 
     });
     
@@ -91,9 +98,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
         Sortable.create(container, {
             group: 'shared',
             animation: 50,
-            onMove: evt => preventPlacementIfTaken(evt),
+            onMove: evt => {
+                let canMove = preventPlacementIfTaken(evt);
+                displayMessage("", 'black');
+                return canMove;
+            },
             onEnd: evt => {
                 sendTilePlacementToServer(evt.item.id, evt.to.id);
+                dropSound.play();
             },
             chosenClass: 'sortable-chosen',
             forceFallback: true,
@@ -178,10 +190,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             return response.json()
         })
         .then(data => {
-            if (data.message) {
-                displayMessage(data.message, 'red')
+            if (data.message && data.status == 'fail') {
+                invalidSound.play();
+                displayMessage(data.message, 'red');
             }
-            if (data.tiles_to_remove) {
+            if (data.tiles_to_remove && data.status == 'fail') {
                 for (let pos of data.tiles_to_remove) {
                     let [row, col] = pos;
                     console.log(`row: ${row}, col: ${col}, gridID: grid${row + 1}_${col + 1}`);
@@ -194,8 +207,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
             }
             // Changes to be made after valid move
-            if (data.status == 200) {
-                displayMessage(data.message, 'green')             
+            if (data.status == 'success') {
+                validSound.play();
+                displayMessage(data.message, 'green');         
 
                 // Change class of tiles on the board from 'tile-tray' to 'tile-ingame'
                 let boardContainer = document.getElementById('board-square-container');
@@ -226,6 +240,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         })
         .then(response => response.json())
         .then(data => {
+            dropSound.play();
             // Remove current tiles from the tray
             let trayElement = document.getElementById('tray');
             while (trayElement.firstChild) {
@@ -247,8 +262,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                displayMessage(data.message, 'red')
+                invalidSound.play();
+                displayMessage(data.message, 'red');
             } else {
+                dropSound.play();
                 let tray = document.querySelector('#tray');
                 while (tray.firstChild) { // Empty tray
                     tray.removeChild(tray.firstChild);
@@ -286,9 +303,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
             Sortable.create(boardContainer.children[i], {
                 group: 'shared', // set both sortables to same group
                 filter: '.tile-ingame',
-                onMove: evt => preventPlacementIfTaken(evt),
+                onMove: evt => {
+                    let canMove = preventPlacementIfTaken(evt);
+                    displayMessage("", 'black');
+                    return canMove;
+                },
                 onEnd: evt => {
                     sendTilePlacementToServer(evt.item.id, evt.to.id);
+                    dropSound.play();
                 },
                 chosenClass: 'sortable-chosen',
                 forceFallback: true,

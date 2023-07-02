@@ -176,7 +176,8 @@ def submit():
                 all_words_valid = False
                 response = {
                     'message': f'{word} is not a valid word. Try again.',
-                    'tiles_to_remove': board_manager.player_moves
+                    'tiles_to_remove': board_manager.player_moves,
+                    'status': 'fail'
                 }
                 board_manager.erase_player_moves()
                 print(board_manager.display())
@@ -213,18 +214,20 @@ def submit():
             'message': f'{word} is a valid word. Create a new word.',
             'tiles': new_player_tiles,
             'points': points,
-            'status': 200
+            'status': 'success'
         }
         return jsonify(response)
     elif all_words_valid and all_words_intercept and not bool(board_manager.player_moves): # not bool checks if player moves is empty
         response = {
-            'message': 'Place tiles to create a word.'
+            'message': 'Place tiles to create a word.',
+            'status': 'fail'
         }
         return jsonify(response)
     else: 
         response = {
-            'message': 'Tile does not intercept with existing word. Try again',
-            'tiles_to_remove': board_manager.player_moves
+            'message': 'Tile does not intercept with an existing word. Try again',
+            'tiles_to_remove': board_manager.player_moves,
+            'status': 'fail'
         }
         board_manager.erase_player_moves()
         print(board_manager.display())
@@ -498,13 +501,13 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: "Make drag and drop smoother. Remove copy jittery copy of tile. Fix aesthetics of ingame buttons. Remove hover effect from discard button after button is disabled. Add footer to end of webpage."
+# DID: Remove message when player clicks a tile. Add sound effects.
 
+# TODO: Add high-score sound effect. And end of game
+# TODO: At end of game, replace buttons with Play Again button.
 # TODO: Update hiscore if player passes it.
-# TODO: Remove message when player clicks a tile.
 # TODO: End game when timer runs out
 # TODO: Add a way to exit the game
-# TODO: Add sound effects
 # TODO: Fix loading lag of image in main menu.
 
 # lsof -i :5000
