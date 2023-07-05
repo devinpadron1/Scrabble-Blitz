@@ -514,10 +514,3 @@ tile_manager = TileManager()
 # Only run code when imported as script, not a module
 if __name__ == '__main__':
     app.run(debug=True)
-
-# DID: Add points in seconds to time.
-
-# TODO: Fix footer. Make it flex.
-
-# lsof -i :5000
-# kill -9 {num}

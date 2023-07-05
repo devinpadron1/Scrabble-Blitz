@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.querySelector('#points').innerHTML = 0; // Reset points
         timer.reset();
         timer.start();
-        
+
         // Discard reset
         document.getElementById('discard').disabled = false;
         discards = 2;
@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
     
     function getTiles() {
-        fetch('http://127.0.0.1:5000/word')
+        fetch('/word')
             .then(response => response.json())
             .then(data => {
                 clearTrayAndBoard();
@@ -257,7 +257,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     };
 
     document.getElementById('submit').addEventListener('click', function() {
-        fetch('http://127.0.0.1:5000/submit', {
+        fetch('/submit', {
             method: 'POST'
         })
         .then(response => {
@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     // Shuffle button
     document.getElementById('shuffle').addEventListener('click', function() {
-        fetch('http://127.0.0.1:5000/shuffle', {
+        fetch('/shuffle', {
             method: 'POST',
         })
         .then(response => response.json())
@@ -343,7 +343,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     // Discard button
     document.getElementById('discard').addEventListener('click', function() {
-        fetch('http://127.0.0.1:5000/discard', {
+        fetch('/discard', {
             method: 'POST',
         })
         .then(response => response.json())
