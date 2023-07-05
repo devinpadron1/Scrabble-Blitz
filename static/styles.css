@@ -14,10 +14,14 @@ body {
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 #instructions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     padding: 140px;
 }
@@ -277,7 +281,7 @@ img {
     height: 20px;
     font-size: 14px;
     text-align: center;
-    margin-top: 100px;
+    margin-top: 60px;
 }
 
 #github-logo,
@@ -296,4 +300,9 @@ a {
 img {
     margin-top: 0px;
     margin-bottom: 3px;
+}
+
+#sb-tile {
+    display: flex;
+    justify-content: center;
 }

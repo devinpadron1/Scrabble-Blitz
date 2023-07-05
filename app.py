@@ -56,6 +56,8 @@ def home():
 def load_initial_state():    
     tile_manager.return_all_tiles()
     board_manager.clear_board()
+    board_manager.existing_words = {}
+    tile_manager.discards = 2
 
     word = word_manager.get_first_word()
     board_manager.existing_words[word] = []
@@ -207,15 +209,16 @@ def submit():
         new_player_tiles = [tile for tile in new_player_rack if tile not in old_player_rack]
         print(tile_manager.player_rack)
 
-        points = word_manager.get_points(words_on_board)
+        total_points, word_points = word_manager.get_points(words_on_board)
 
         board_manager.player_moves = []
         board_manager.player_moves_coords = []
         
         response = {
-            'message': f'{word} is a valid word. Create a new word.',
+            'message': f'{word} is a valid word. +{word_points}pts +{word_points}sec',
             'tiles': new_player_tiles,
-            'points': points,
+            'points': total_points,
+            'word_points': word_points,
             'status': 'success'
         }
         return jsonify(response)
@@ -232,6 +235,7 @@ def submit():
             'status': 'fail'
         }
         board_manager.erase_player_moves()
+        print(response['message'])
         print(board_manager.display())
         return jsonify(response), 400 # 400 communicates client error
 
@@ -431,7 +435,7 @@ class WordManager:
                 word_points = word_points * 3
             self.points += word_points
         print("Player scored", word_points, "points. \nTotal Points:", self.points)
-        return self.points
+        return self.points, word_points
 
 class BoardManager:
     def __init__(self, size=11): # Generate board
@@ -511,12 +515,9 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: Add end game sound. Add play again button at end of game. Add sound button to toggle on/off.
+# DID: Add points in seconds to time.
 
-# TODO: Fix issue where game isn't recognizing first letter as intercepting in first try.
-# TODO: Restart game when play again is pressed.
 # TODO: Fix footer. Make it flex.
-# TODO: Add points in seconds to time.
 
 # lsof -i :5000
 # kill -9 {num}

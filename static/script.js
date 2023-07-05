@@ -67,7 +67,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.getElementById('discard').style.removeProperty('display');
         document.getElementById('new-game').classList.remove('end-game');
         document.querySelector('#points').innerHTML = 0; // Reset points
-        clearInterval(timerInterval); // Stop timer
+        timer.reset();
+        timer.start();
+        
+        // Discard reset
+        document.getElementById('discard').disabled = false;
+        discards = 2;
+        document.getElementById('discard').textContent = `Discard (${discards})`;
+
         displayMessage("", 'black');
         gameData.highScoreAchieved = false;
         startLogic();
@@ -80,10 +87,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
         startGame(); 
     }
     
+    let gameLoaded = false;
+
     function startGame() {
-        loadBoard();
+        if (!gameLoaded) {
+            loadBoard();
+            gameLoaded = true;
+        }
         getTiles();
-        startTimer();
+        timer.start(); 
     }
     
     function getTiles() {
@@ -280,9 +292,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     tile.classList.add('tile-ingame');
                     tile.classList.remove('tile-tray');
                 });
-                
+
+                timer.addTime(data.word_points); // to add 30 seconds    }
+                                
                 document.querySelector('#points').innerText = data.points;
-                if (data.points > parseInt(document.getElementById('high-score').innerText) && !gameData.highScoreAchieved) {
+                let highScore = parseInt(document.getElementById('high-score').innerText);
+                if ((data.points > highScore) && !gameData.highScoreAchieved) {
                     displayMessage("New high score achieved! Congratulations!", 'blue');
                     document.querySelector('#message span').style.fontWeight = 'bold';
                     highScoreSound.play();
@@ -451,43 +466,60 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     let timerInterval;
 
-    function startTimer() {
-        // Set the initial time (in seconds)
-        let timeRemaining = 120; // in seconds
-        // Get the timer element
-        let timerElement = document.getElementById("timer");
-    
-        // Update the timer display
-        function updateTimerDisplay() {
-            let minutes = Math.floor(timeRemaining / 60);
-            let seconds = timeRemaining % 60;
-            // Pad the minutes and seconds with leading zeros if necessary
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-            // Update the timer element
-            timerElement.innerText = `${minutes}:${seconds}`;
-        }
-    
-        // Call the update function immediately to display the initial time
-        updateTimerDisplay();
-    
-        // Set up the interval
-        timerInterval = setInterval(function() {
-            // Decrease the time remaining
-            timeRemaining--;
+    let timer = {
+        initialTime: 60 * 2, // 2 minutes
+        timeRemaining: 60 * 2, // 2 minutes
+
+        addTime: function(seconds) {
+            this.timeRemaining += seconds;
+        },
+
+        reset: function() {
+            this.timeRemaining = this.initialTime;
+        },
+
+        start: function() {
+            // Get the timer element
+            let timerElement = document.getElementById("timer");
+
             // Update the timer display
-            updateTimerDisplay();
-            // If the time has run out, stop the interval
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                displayMessage("Time's up! Play again!", 'black');
-                endSound.play();
-                document.getElementById('new-game').classList.add('end-game');
-                document.querySelector('#message span').style.fontWeight = 'bold';
-                document.getElementById('shuffle').style.display = 'none';
-                document.getElementById('submit').style.display = 'none';
-                document.getElementById('discard').style.display = 'none';
-                document.getElementById('new-game').style.display = 'block';
+            function updateTimerDisplay() {
+                let minutes = Math.floor(timer.timeRemaining / 60);
+                let seconds = timer.timeRemaining % 60;
+                // Pad the minutes and seconds with leading zeros if necessary
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                // Update the timer element
+                timerElement.innerText = `${minutes}:${seconds}`;
             }
-        }, 1000);
+
+            // Clear the previous interval if it exists
+            if(timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Call the update function immediately to display the initial time
+            updateTimerDisplay();
+
+            // Set up the interval
+            timerInterval = setInterval(function() {
+                // Decrease the time remaining
+                timer.timeRemaining--;
+                // Update the timer display
+                updateTimerDisplay();
+                // If the time has run out, stop the interval
+                if (timer.timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    displayMessage("Time's up! Play again!", 'black');
+                    endSound.play();
+                    document.getElementById('new-game').classList.add('end-game');
+                    document.querySelector('#message span').style.fontWeight = 'bold';
+                    document.getElementById('shuffle').style.display = 'none';
+                    document.getElementById('submit').style.display = 'none';
+                    document.getElementById('discard').style.display = 'none';
+                    document.getElementById('new-game').style.display = 'block';
+                }
+            }, 1000);
+        }
     }
+
 })
