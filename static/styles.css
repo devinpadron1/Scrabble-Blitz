@@ -14,12 +14,12 @@ body {
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    min-height: 100vh;
 }
 
 #instructions {
     text-align: center;
+    padding: 140px;
 }
 
 #game-screen {
@@ -138,7 +138,7 @@ span {
     display: flex;
     justify-content: space-between;
     width: 500px;
-    margin-top: 10px;
+    margin-top: 30px;
 }
 
 .top-sub-container {
@@ -188,8 +188,9 @@ span {
     display: flex;
     justify-content: space-between;
     height: 50px;
+    width: 580px;
 }
-#in-game-buttons button{
+button {
     width: 90px;
     font-size: 20px;
     border-radius: 5px;
@@ -201,8 +202,37 @@ span {
     font-size: 24px;
 }
 
-#shuffle-button { background-color: rgb(232, 232, 255);}
-#shuffle-button:hover { background-color: rgb(165, 165, 251);}
+#sound, 
+#new-game {
+    font-size: 16px;
+    width: 65px;
+    height: 50px;
+}
+
+#in-game-buttons .end-game {
+    font-size: 32px;
+    width: 250px;
+    margin-right: 163px;
+}
+
+#in-game-buttons #sound {
+    background-color: rgb(230, 208, 244);
+    margin-right: auto;
+}
+#in-game-buttons #new-game {
+    background-color: rgb(244, 241, 183);
+    margin-left: auto;
+}
+#in-game-buttons #new-game:hover {background-color: rgb(240, 228, 0);}
+
+.inner-container {
+    display: flex;
+    justify-content: center;
+}
+
+#in-game-buttons #sound:hover { background-color: rgb(195, 115, 245);}
+#shuffle { background-color: rgb(232, 232, 255);}
+#shuffle:hover { background-color: rgb(165, 165, 251);}
 
 #discard { 
     background-color: rgb(251, 203, 203);
@@ -241,15 +271,29 @@ img {
 }
 
 #footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20px;
     font-size: 14px;
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
     text-align: center;
+    margin-top: 100px;
 }
 
-#github-logo {
+#github-logo,
+a {
     height: 14px;
-    width: auto;
+    width: 14px;
+}
+
+a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 3px;
+}
+
+img {
+    margin-top: 0px;
+    margin-bottom: 3px;
 }

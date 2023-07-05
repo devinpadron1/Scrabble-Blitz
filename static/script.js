@@ -33,16 +33,52 @@ document.addEventListener("DOMContentLoaded", function(event) {
     let invalidSound = new Audio("static/invalid.mp3");
     let validSound = new Audio("static/valid.mp3");
     let highScoreSound = new Audio("static/high-score.mp3");
-    invalidSound.volume = .4;
-    dropSound.volume = .8;
-    highScoreSound.volume = .8;
+    let endSound = new Audio("static/end.mp3");
+    dropSound.volume = .2;
+    invalidSound.volume = .08;
+    validSound.volume = .3;
+    highScoreSound.volume = .2;
+    endSound.volume = .05;
+
+    const audioObjects = [dropSound, invalidSound, validSound, highScoreSound, endSound];
 
     document.getElementById('play-button').addEventListener('click', function() {
+        startLogic();
+    });
+
+    document.getElementById('sound').addEventListener('click', function() {
+        soundTextContent = document.querySelector('#sound').innerText
+        if (soundTextContent == "Sound (ON)") {
+            document.querySelector('#sound').innerText = "Sound (OFF)";
+            for (let i = 0; i < audioObjects.length; i++) {
+                audioObjects[i].muted = true;
+            };
+        } else {
+            document.querySelector('#sound').innerText = "Sound (ON)";
+            for (let i = 0; i < audioObjects.length; i++) {
+                audioObjects[i].muted = false;
+            };
+        }
+    });
+
+    document.getElementById('new-game').addEventListener('click', function() {
+        document.getElementById('shuffle').style.removeProperty('display');
+        document.getElementById('submit').style.removeProperty('display');
+        document.getElementById('discard').style.removeProperty('display');
+        document.getElementById('new-game').classList.remove('end-game');
+        document.querySelector('#points').innerHTML = 0; // Reset points
+        clearInterval(timerInterval); // Stop timer
+        displayMessage("", 'black');
+        gameData.highScoreAchieved = false;
+        startLogic();
+    });
+
+    function startLogic() {
         document.getElementById('instructions').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
         dropSound.play();
         startGame(); 
-    });
+    }
     
     function startGame() {
         loadBoard();
@@ -54,6 +90,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         fetch('http://127.0.0.1:5000/word')
             .then(response => response.json())
             .then(data => {
+                clearTrayAndBoard();
                 let wordString = data.word;
                 let playerTiles = data.tiles;
                 let startPosition = Number(data.position);
@@ -84,6 +121,24 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     }
 
+    function clearTrayAndBoard() {
+        const trayContainer = document.getElementById("tray");
+        while (trayContainer.firstChild) {
+            trayContainer.removeChild(trayContainer.firstChild);
+        }
+
+        let boardSquareContainer = document.getElementById('board-square-container');
+        for (let i = 0; i < boardSquareContainer.children.length; i++) {
+            let boardSquare = boardSquareContainer.children[i];
+            let childNodes = Array.from(boardSquare.childNodes); // Create a copy of child nodes
+            childNodes.forEach(child => {
+                if (child.nodeName === "DIV") {
+                    boardSquare.removeChild(child);
+                }
+            });
+        }
+    }
+
     function loadPlayerTiles(tiles) {
         let tileLength = tiles.length;
         let container = document.getElementById(`tray`);
@@ -102,11 +157,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             animation: 50,
             onMove: evt => {
                 let canMove = preventPlacementIfTaken(evt);
-                displayMessage("", 'black');
                 return canMove;
             },
             onEnd: evt => {
                 sendTilePlacementToServer(evt.item.id, evt.to.id);
+                displayMessage("", 'black');
                 dropSound.play();
             },
             chosenClass: 'sortable-chosen',
@@ -184,7 +239,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
         makeSquaresDroppable();
     }
 
-    let highScoreAchieved = false
+    let gameData = {
+        highScoreAchieved: false,
+        // Other game data here
+    };
 
     document.getElementById('submit').addEventListener('click', function() {
         fetch('http://127.0.0.1:5000/submit', {
@@ -224,14 +282,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 });
                 
                 document.querySelector('#points').innerText = data.points;
-                if (data.points > 100 && !highScoreAchieved) {
+                if (data.points > parseInt(document.getElementById('high-score').innerText) && !gameData.highScoreAchieved) {
                     displayMessage("New high score achieved! Congratulations!", 'blue');
                     document.querySelector('#message span').style.fontWeight = 'bold';
                     highScoreSound.play();
-                    highScoreAchieved = true;
+                    gameData.highScoreAchieved = true;
                 }
 
-                if (highScoreAchieved) {
+                if (gameData.highScoreAchieved) {
                     document.querySelector('#high-score').innerHTML = data.points;
                 }
 
@@ -248,7 +306,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
 
     // Shuffle button
-    document.getElementById('shuffle-button').addEventListener('click', function() {
+    document.getElementById('shuffle').addEventListener('click', function() {
         fetch('http://127.0.0.1:5000/shuffle', {
             method: 'POST',
         })
@@ -319,11 +377,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 filter: '.tile-ingame',
                 onMove: evt => {
                     let canMove = preventPlacementIfTaken(evt);
-                    displayMessage("", 'black');
                     return canMove;
                 },
                 onEnd: evt => {
                     sendTilePlacementToServer(evt.item.id, evt.to.id);
+                    displayMessage("", 'black');
                     dropSound.play();
                 },
                 chosenClass: 'sortable-chosen',
@@ -391,9 +449,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.querySelector('#message span').style.fontWeight = 'normal';
     }
 
+    let timerInterval;
+
     function startTimer() {
         // Set the initial time (in seconds)
-        let timeRemaining = 2 * 60;
+        let timeRemaining = 120; // in seconds
         // Get the timer element
         let timerElement = document.getElementById("timer");
     
@@ -411,7 +471,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         updateTimerDisplay();
     
         // Set up the interval
-        let timerInterval = setInterval(function() {
+        timerInterval = setInterval(function() {
             // Decrease the time remaining
             timeRemaining--;
             // Update the timer display
@@ -419,6 +479,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
             // If the time has run out, stop the interval
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
+                displayMessage("Time's up! Play again!", 'black');
+                endSound.play();
+                document.getElementById('new-game').classList.add('end-game');
+                document.querySelector('#message span').style.fontWeight = 'bold';
+                document.getElementById('shuffle').style.display = 'none';
+                document.getElementById('submit').style.display = 'none';
+                document.getElementById('discard').style.display = 'none';
+                document.getElementById('new-game').style.display = 'block';
             }
         }, 1000);
     }

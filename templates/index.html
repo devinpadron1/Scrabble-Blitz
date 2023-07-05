@@ -14,14 +14,14 @@
     <div id="instructions">
         <img src="static/sb_logo.png" alt="">
         <h1>Scrabble Blitz</h1>
-        <p>Earn the most points before times runs out!</p>
+        <p>Earn the most points before time runs out!</p>
         <button id="play-button">Play</a>
     </div>
     <div id="game-screen" style="display: none;">
         <div id="top-container">
             <div class="top-sub-container hs">
                 <div>High-Score</div>
-                <div id="high-score">100</div>
+                <div id="high-score">0</div>
             </div>
             <div class="top-sub-container pt">
                 <div>Points</div>
@@ -40,13 +40,15 @@
         </div>
         <div id="tray" class="dropzone"></div>
         <div id="in-game-buttons">
-            <button id="shuffle-button">Shuffle</button>
-            <button id="submit">Submit</button>
-            <button id="discard">Discard (2)</button>
+            <button id="sound">Sound (ON)</button>
+            <div class="inner-container">
+                <button id="shuffle">Shuffle</button>
+                <button id="submit">Submit</button>
+                <button id="discard">Discard (2)</button>
+            </div>
+            <button id="new-game">New Game</button>
         </div>
     </div>
-    <div id="footer">
-        <p>Created by Devin Padrón <a href="https://github.com/devinpadron1"><img src="static/github.png" alt="GitHub logo" id="github-logo"></a></p>
-    </div>
+    <p id="footer">Created by Devin Padrón<a href="https://github.com/devinpadron1" target="_blank"><img src="static/github.png" alt="GitHub logo" id="github-logo"></a></p>
 </body>
 </html>

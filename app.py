@@ -54,6 +54,9 @@ def home():
 
 @app.route('/word', methods=['GET'])
 def load_initial_state():    
+    tile_manager.return_all_tiles()
+    board_manager.clear_board()
+
     word = word_manager.get_first_word()
     board_manager.existing_words[word] = []
 
@@ -61,7 +64,6 @@ def load_initial_state():
 
     tiles = tile_manager.get_player_tiles(7)
     
-    board_manager.clear_board()
     board_manager.add_first_word(word, position, orientation) # Adds it to server-side grid
     board_manager.display()
     word_manager.points = 0
@@ -263,6 +265,14 @@ class TileManager:
                 self.tiles_to_discard += 1
             self.discards -= 1
             return self.get_player_tiles(self.tiles_to_discard), self.discards
+        
+    def return_all_tiles(self):
+        for tile in self.player_rack.copy():
+            self.player_rack.remove(tile)
+            self.current_tiles[tile[0]]['amount'] += 1
+        for tile in board_manager.board:
+            if tile[0].isalpha():
+                self.current_tiles[tile[0]]['amount'] += 1
 
     def shuffle_tiles(self):
         random.shuffle(self.player_rack)
@@ -501,14 +511,12 @@ tile_manager = TileManager()
 if __name__ == '__main__':
     app.run(debug=True)
 
-# DID: ...
+# DID: Add end game sound. Add play again button at end of game. Add sound button to toggle on/off.
 
-# TODO: Add high-score sound effect. And end of game
-# TODO: At end of game, replace buttons with Play Again button.
-# TODO: Update hiscore if player passes it.
-# TODO: End game when timer runs out
-# TODO: Add a way to exit the game
-# TODO: Fix loading lag of image in main menu.
+# TODO: Fix issue where game isn't recognizing first letter as intercepting in first try.
+# TODO: Restart game when play again is pressed.
+# TODO: Fix footer. Make it flex.
+# TODO: Add points in seconds to time.
 
 # lsof -i :5000
 # kill -9 {num}
