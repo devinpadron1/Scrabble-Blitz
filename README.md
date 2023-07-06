@@ -1,6 +1,6 @@
 # Scrabble Blitz
 
-#### Live Link: http://devinpadron.pythonanywhere.com/
+#### Play Now: http://devinpadron.pythonanywhere.com/
 
 #### Video Demo: https://www.youtube.com/watch?v=4xN2doP4wTk
 
