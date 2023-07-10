@@ -1,8 +1,8 @@
 # Scrabble Blitz
 
-#### Play Now: http://devinpadron.pythonanywhere.com/
+### [Play Now](http://devinpadron.pythonanywhere.com/)
 
-#### Video Demo: https://www.youtube.com/watch?v=4xN2doP4wTk
+### [Video Demo](https://www.youtube.com/watch?v=4xN2doP4wTk)
 
 ## Description:
 Scrabble-Blitz is a web-based board game inspired by Scrabble. It challenges players to create words under a time limit using a set of randomly assigned tiles.
